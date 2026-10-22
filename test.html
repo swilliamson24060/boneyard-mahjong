@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boneyard tests</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 24px 16px 48px; background: #141118; color: #e8e2ee; font: 15px/1.5 system-ui, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 32px 0 4px; }
+  p { margin: 0 0 12px; color: #a99fb5; }
+  #results { list-style: none; padding: 0; margin: 12px 0; }
+  #results li { padding: 3px 0; }
+  .pass { color: #9bd49b; }
+  .fail { color: #ff9a8f; }
+  .ms { color: #776d83; font-size: 13px; }
+  #board-wrap { overflow-x: auto; padding-bottom: 8px; }
+  #board { position: relative; }
+  .tile {
+    position: absolute; box-sizing: border-box; width: 32px; height: 42px;
+    border-radius: 4px; background: #efe6d2; border: 1px solid #8a7d66; box-shadow: -3px 3px 0 #b3a383;
+    font: 600 12px/40px system-ui, sans-serif; text-align: center;
+  }
+  .tile.free { outline: 2px solid #f0a33a; outline-offset: -3px; }
+</style>
+</head>
+<body>
+  <h1>Engine tests</h1>
+  <p id="summary">Running…</p>
+  <ol id="results"></ol>
+  <h2>A dealt turtle</h2>
+  <p>Seed 1. Free tiles are outlined.</p>
+  <div id="board-wrap"><div id="board"></div></div>
+  <script type="module" src="tests/main.js"></script>
+</body>
+</html>

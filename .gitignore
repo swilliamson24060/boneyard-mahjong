@@ -1,0 +1,4 @@
+.DS_Store
+
+# The preview server's settings point into a scratch folder of one session.
+.claude/launch.json
