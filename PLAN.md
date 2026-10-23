@@ -66,6 +66,27 @@ Thirteen boards, one an hour from 6 pm to 6 am. The sky behind the board darkens
 
 The classic 144-tile turtle is there too, for wider screens.
 
+## Scoring
+
+| | Points |
+|---|---|
+| Each pair taken | +10 |
+| Clearing the board | +250 |
+| Speed | +2 for every second under par: 5 seconds a tile, 6 on a board that turns over |
+| A shuffle | −100 |
+| A hint | −25 |
+| A black cat, a candle, a skeleton key | free: treats are the reward for jack-o'-lanterns |
+| Undo | free, but a pair taken back takes its points with it |
+| Turning over with no lost souls | +150 |
+| Each lost soul that wakes | −10 |
+
+- The clock shows real time, and hints and shuffles cost points rather than seconds, so nothing is charged twice.
+- The score shows in the top bar and rises in small "+10"s and "−100"s from where they happen; the win card gives it line by line.
+- The night's card keeps the best score for each hour, and a night score: those bests added up.
+- The score is worked out from what the game already records, so it holds through undo and reloads.
+- The numbers are a starting point, to be tuned by playing.
+- Later, perhaps: quick hands, a speed mode where pairs found quickly one after another are worth double, then triple.
+
 ## How it's built
 
 - Plain HTML, CSS and ES modules: no build step and no libraries, served from any static host (GitHub Pages works). A small service worker makes it installable and playable offline.
@@ -93,7 +114,7 @@ The classic 144-tile turtle is there too, for wider screens.
 | Thu 29 | Polish | Smooth on phones; No Frights; colour-blind check; offline play; icons |
 | Fri 30 | Ship | Live on a static host; Saturday stays spare |
 
-**Fri 23 Oct:** shipped, eight days before Halloween: the game is live at https://swilliamson24060.github.io/boneyard-mahjong/.
+**Fri 23 Oct:** shipped, eight days before Halloween: the game is live at https://swilliamson24060.github.io/boneyard-mahjong/. Then scoring, and updates that reach players on their next load.
 
 **Thu 22 Oct:** everything up to shipping is done, seven days ahead. The Long Night's thirteen boards play from dusk to dawn, kept as you go, with sound. Once loaded the game plays offline and installs as an app with its own icon. Hints come by planchette, and the faces read by shape alone, with no colour. Players who ask their device for less motion get none. The game has only been tried at phone sizes in a desktop browser, so how smoothly it runs on a real phone is still to be seen. Shipping is next.
 

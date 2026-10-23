@@ -4,10 +4,8 @@ import { HOURS, gameOptions } from './night.js';
 import { sprite } from './ui/faces.js';
 import { Board } from './ui/board.js';
 import { Sound } from './ui/sound.js';
+import { POINTS, par, scoreOf } from './score.js';
 
-// Seconds added to the time for help: a hint, and a shuffle. Treats are free.
-const HINT_COST = 15;
-const SHUFFLE_COST = 30;
 const MIDNIGHT = HOURS.findIndex((h) => h.name === 'Midnight');
 
 const TREAT_NAMES = {
@@ -33,9 +31,10 @@ let finished = false;
 let woke = 0;
 let prompted = false;
 
-// What is kept between visits: the latest hour reached, the best time for
-// each hour, and the board in play as its seed and its moves.
-let saved = { reached: 0, best: {}, playing: null };
+// What is kept between visits: the latest hour reached, the best time and
+// the best score for each hour, and the board in play as its seed and its
+// moves.
+let saved = { reached: 0, best: {}, scores: {}, playing: null };
 try {
   saved = { ...saved, ...JSON.parse(localStorage.getItem('boneyard.night')) };
 } catch {}
@@ -62,6 +61,7 @@ function play({ layout, options, seed, replay = [], playedFor = 0, at = -1 }) {
   board = new Board($('board'), game, { say: toast, sound });
   game.on('match', ({ a, b }) => {
     sound.match();
+    board.float(`+${POINTS.pair}`, b);
     record(['m', a, b]);
   });
   game.on('undo', () => {
@@ -74,6 +74,7 @@ function play({ layout, options, seed, replay = [], playedFor = 0, at = -1 }) {
   });
   game.on('shuffle', ({ cat }) => {
     sound.shuffle();
+    if (!cat) board.float(signed(POINTS.shuffle), -1, true);
     record([cat ? 'c' : 's']);
   });
   game.on('key', (i) => record(['k', i]));
@@ -146,38 +147,51 @@ function turned({ souls }) {
   else sound.sunrise();
   const what = game.sideName === 'night' ? 'Midnight! The tiles turn over.' : 'Sunrise! The tiles turn back to day.';
   toast(woke ? `${what} ${woke} lost ${woke === 1 ? 'soul wakes' : 'souls wake'}: lost souls match each other.` : `${what} Not one lost soul.`);
+  const earned = woke ? woke * POINTS.soul : POINTS.clean;
+  setTimeout(() => board.float(signed(earned), -1, earned < 0), 900); // once the tiles have turned
   update();
 }
 
+// A cleared board: its score, line by line, and the best for its hour kept.
 function won() {
   hold();
   finished = true;
-  const time = seconds();
-  const lost = woke ? ` ${woke} lost ${woke === 1 ? 'soul' : 'souls'} woke.` : '';
+  const time = played();
+  const { total, rows } = scoreOf(game, time);
+  const lines = [...rows, ['Score', '', total]];
+  const timing = `In ${clock(time)}, against a par of ${clock(par(game))}.`;
   update();
   if (hour < 0) {
     const key = location.hash.split('/')[1];
-    showCard('The board is clear!', `In ${clock(time)}.${lost}`, [['Deal again', () => freePlay(key)], ['The Long Night', menu]]);
+    showCard('The board is clear!', timing, [['Deal again', () => freePlay(key)], ['The Long Night', menu]], [], lines);
     return;
   }
   const spec = HOURS[hour];
-  const best = saved.best[hour];
-  if (!best || time < best) saved.best[hour] = time;
+  const best = saved.scores[hour];
+  if (best === undefined || total > best) saved.scores[hour] = total;
+  if (!saved.best[hour] || time < saved.best[hour]) saved.best[hour] = time;
   saved.reached = Math.max(saved.reached, Math.min(hour + 1, HOURS.length - 1));
   saved.playing = null;
   store();
-  const note = best && best < time ? ` Your best is ${clock(best)}.` : best ? ' Your best yet.' : '';
+  const note = best === undefined ? '' : total > best ? ' Your best yet.' : ` Your best is ${signed(best, '')}.`;
   if (hour === HOURS.length - 1) {
-    showCard('Dawn', `The sun is up, and you have seen the Long Night through. This last board took ${clock(time)}.${lost}`, [
+    showCard('Dawn', `The sun is up, and you have seen the Long Night through. ${nightScore()}`, [
       ['Begin again', () => beginHour(0)],
       ['The turtle', () => freePlay('turtle')],
-    ]);
+    ], [], lines);
   } else {
-    showCard(`${spec.name}: cleared`, `In ${clock(time)}.${note}${lost}`, [
+    showCard(`${spec.name}: cleared`, `${timing}${note}`, [
       [`On to ${HOURS[hour + 1].name}`, () => beginHour(hour + 1)],
       ['Play it again', () => beginHour(hour)],
-    ]);
+    ], [], lines);
   }
+}
+
+// The night score: the best score at each hour, added up.
+function nightScore() {
+  const scores = Object.values(saved.scores);
+  if (!scores.length) return '';
+  return `Your night score, your best at each hour added up, is ${signed(scores.reduce((a, b) => a + b, 0), '')}.`;
 }
 
 function stuck() {
@@ -194,17 +208,19 @@ function menu(opening = false) {
   const actions = [];
   if (game && !finished && opening !== true) actions.push(['Back to the board', () => (hideCard(), run())]);
   const p = saved.playing;
-  if (p && p.hour !== hour) actions.push([`Go on at ${HOURS[p.hour].name}`, () => beginHour(p.hour, p)]);
-  const begun = saved.reached > 0 || (p && (p.hour > 0 || p.moves.length > 0));
-  actions.push([begun ? 'Begin again at 6 pm' : 'Begin at 6 pm', () => beginHour(0)]);
+  const inPlay = p && (p.hour > 0 || p.moves.length > 0); // a board begun and not yet cleared
+  if (inPlay && p.hour !== hour) actions.push([`Go on at ${HOURS[p.hour].name}`, () => beginHour(p.hour, p)]);
+  else if (!inPlay && saved.reached > 0) actions.push([`On to ${HOURS[saved.reached].name}`, () => beginHour(saved.reached)]);
+  actions.push([saved.reached > 0 || inPlay ? 'Begin again at 6 pm' : 'Begin at 6 pm', () => beginHour(0)]);
   if (hour >= 0 || !game) actions.push(['The turtle', () => freePlay('turtle')]);
   const hours = HOURS.map((h, i) => ({
     label: h.name,
-    sub: saved.best[i] ? clock(saved.best[i]) : '',
+    sub: saved.scores[i] !== undefined ? `★ ${signed(saved.scores[i], '')}` : '',
     act: () => beginHour(i),
     disabled: i > saved.reached,
   }));
-  showCard('The Long Night', 'Thirteen boards, one an hour from dusk to dawn. Each hour you reach can be played again.', actions, hours);
+  const intro = 'Thirteen boards, one an hour from dusk to dawn. Each hour you reach can be played again.';
+  showCard('The Long Night', `${intro} ${nightScore()}`.trim(), actions, hours);
 }
 
 // --------------------------------------------------------- what's showing
@@ -214,6 +230,7 @@ function update() {
   $('where').innerHTML = hour >= 0 ? `<b>${HOURS[hour].name}</b> ${HOURS[hour].layout.name}` : `<b>Free play</b> ${g.layout.name}`;
   $('new').hidden = hour >= 0;
   $('left').innerHTML = `<b>${g.left}</b> tiles`;
+  $('score').innerHTML = `★ <b>${signed(scoreOf(g, played()).total, '')}</b>`;
   const turns = g.sides.length > 1;
   const night = g.sideNames[1] === 'night';
   $('clock').hidden = !turns;
@@ -268,11 +285,16 @@ function hold() {
 }
 
 const played = () => elapsed + (started ? (performance.now() - started) / 1000 : 0);
-const seconds = () => played() + HINT_COST * game.hints + SHUFFLE_COST * game.shuffles;
 const clock = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
 
+// Points with their sign, the minus a true one: +10, −100. With no plus, for totals.
+const signed = (n, plus = '+') => (n < 0 ? `−${(-n).toLocaleString()}` : `${n ? plus : ''}${n.toLocaleString()}`);
+
+// The clock, against par.
 function tick() {
-  if (game) $('time').textContent = `⏱ ${clock(seconds())}`;
+  if (!game) return;
+  $('time').textContent = `⏱ ${clock(played())} / ${clock(par(game))}`;
+  $('time').title = 'Time, against par: two points for every second under it';
 }
 
 let toastTimer = 0;
@@ -285,10 +307,21 @@ function toast(text) {
 }
 
 // A card over the board: a title, a few words, buttons, and perhaps a grid
-// of smaller buttons with a line under each.
-function showCard(title, text, actions, grid = []) {
+// of smaller buttons with a line under each, or a score line by line, the
+// last line its total.
+function showCard(title, text, actions, grid = [], lines = []) {
   $('card-title').textContent = title;
   $('card-text').textContent = text;
+  const table = $('card-score');
+  table.replaceChildren();
+  table.hidden = !lines.length;
+  lines.forEach(([what, how, n], k) => {
+    const tr = table.insertRow();
+    if (k === lines.length - 1) tr.className = 'total';
+    tr.insertCell().textContent = what;
+    tr.insertCell().textContent = how;
+    tr.insertCell().textContent = k === lines.length - 1 ? signed(n, '') : signed(n);
+  });
   const box = $('card-grid');
   box.replaceChildren();
   box.hidden = !grid.length;
@@ -331,6 +364,7 @@ function help(what) {
     if (pair) {
       sound.hint();
       board.show(pair);
+      if (what === 'hint') board.float(signed(POINTS.hint), pair[0], true);
     }
     if (game.outlook === 'lost') toast("This board can't be won from here: undo, or shuffle.");
   } else if (what === 'shuffle' || what === 'cat') {

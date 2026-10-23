@@ -264,18 +264,35 @@ export class Board {
       this.glide(this.el.offsetWidth / 2, this.el.offsetHeight + this.planchette.offsetHeight);
     }
     const p = this.planchette;
-    const centre = (i) => {
-      const t = this.tiles[i].el;
-      return [t.offsetLeft + t.offsetWidth / 2, t.offsetTop + t.offsetHeight / 2];
-    };
     clearTimeout(this.gliding);
     void p.offsetWidth;
     p.classList.add('on');
-    this.glide(...centre(pair[0]));
+    this.glide(...this.centre(pair[0]));
     this.gliding = setTimeout(() => {
-      this.glide(...centre(pair[1]));
+      this.glide(...this.centre(pair[1]));
       this.gliding = setTimeout(() => p.classList.remove('on'), 1500);
     }, 700);
+  }
+
+  // The middle of a tile on the board, or of the board itself.
+  centre(i = -1) {
+    if (i < 0) return [this.el.offsetWidth / 2, this.el.offsetHeight / 2];
+    const t = this.tiles[i].el;
+    return [t.offsetLeft + t.offsetWidth / 2, t.offsetTop + t.offsetHeight / 2];
+  }
+
+  // A few words, such as the points a move earned, rising from a tile or
+  // the middle of the board and fading away.
+  float(text, i = -1, cost = false) {
+    const el = document.createElement('div');
+    el.className = cost ? 'float cost' : 'float';
+    el.textContent = text;
+    el.setAttribute('aria-hidden', 'true');
+    const [x, y] = this.centre(i);
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    this.el.append(el);
+    setTimeout(() => el.remove(), 1300);
   }
 
   // Moves the planchette so that its window sits over a point on the board.

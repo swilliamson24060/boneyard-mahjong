@@ -1,13 +1,15 @@
 // Keeps the game playable offline. Every file it needs is cached when the
 // service worker installs. While there is a network each request still goes
-// to it first, so a new version shows at once, with the cache as the
+// to it first, asking the server whether the file has changed rather than
+// trusting the browser's own copy (GitHub Pages lets browsers keep files
+// for ten minutes), so a new version shows at once, with the cache as the
 // fallback when the network is gone or too slow; the font, which never
 // changes, comes from the cache first. A new list of files wants a new name
 // for the cache, so that old copies are cleared away: only Boneyard's own,
 // since other games on the same site share the browser's cache store.
 
 const PREFIX = 'boneyard-';
-const CACHE = `${PREFIX}1`;
+const CACHE = `${PREFIX}2`;
 const SLOW = 3500; // ms to wait on the network before answering from the cache
 
 const FILES = [
@@ -22,6 +24,7 @@ const FILES = [
   'icons/icon-maskable-512.png',
   'js/main.js',
   'js/night.js',
+  'js/score.js',
   'js/ui/board.js',
   'js/ui/faces.js',
   'js/ui/sound.js',
@@ -63,7 +66,7 @@ self.addEventListener('fetch', (e) => {
 
 async function networkFirst(request) {
   const cache = await caches.open(CACHE);
-  const network = fetch(request).then((response) => {
+  const network = fetch(request, { cache: 'no-cache' }).then((response) => {
     if (response.ok) cache.put(request, response.clone());
     return response;
   });
