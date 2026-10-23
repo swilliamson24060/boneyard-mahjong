@@ -27,3 +27,13 @@ test('the service worker keeps every file the game loads', async () => {
   for (const path of listed) check((await fetch(path)).ok, `${path}, in sw.js, is not there`);
   return `${modules.size} modules, ${listed.size} files`;
 });
+
+test('every button in the bars has an icon and a word', async () => {
+  const page = new DOMParser().parseFromString(await text('index.html'), 'text/html');
+  const buttons = [...page.querySelectorAll('.bar button')];
+  for (const b of buttons) {
+    check(b.querySelector('.icon')?.textContent.trim(), `#${b.id} has no icon`);
+    check(b.querySelector('.label')?.textContent.trim(), `#${b.id} has no word`);
+  }
+  return `${buttons.length} buttons`;
+});

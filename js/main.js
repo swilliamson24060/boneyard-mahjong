@@ -15,6 +15,13 @@ const TREAT_NAMES = {
   cat: 'a black cat, for a free shuffle',
 };
 
+// What each treat does, for a player who taps one with none in hand.
+const TREAT_HELP = {
+  candle: 'A candle shows you a match, for free.',
+  key: 'A skeleton key frees one blocked tile.',
+  cat: 'A black cat shuffles the tiles for free.',
+};
+
 // Every layout by the name an address can give it, for free play: #play/raven/12345.
 const FREE = Object.fromEntries(Object.entries(layouts).map(([k, L]) => [k.toLowerCase(), L]));
 
@@ -257,8 +264,8 @@ function update() {
   $('souls').title = g.turnAhead ? 'Lost souls if the tiles turned over now' : 'Lost souls that woke';
   $('souls').innerHTML = `👻 <b>${g.turnAhead ? g.soulsIfNow() : woke}</b>`;
   for (const t of ['candle', 'key', 'cat']) {
-    $(t).querySelector('b').textContent = g.treats[t];
-    $(t).disabled = !g.treats[t];
+    $(t).querySelector('.count').textContent = g.treats[t];
+    $(t).classList.toggle('none', !g.treats[t]);
   }
   $('key').classList.toggle('on', board.keying);
   $('undo').disabled = !g.history.length;
@@ -365,9 +372,14 @@ function hideCard() {
 
 // ---------------------------------------------------------- buttons and keys
 
-// Everything the buttons and keys do.
+// Everything the buttons and keys do. A treat with none in hand says what it
+// would do, and where treats come from.
 function help(what) {
   if (!game || board.busy || (finished && what !== 'undo')) return;
+  if (TREAT_HELP[what] && !game.treats[what]) {
+    toast(`${TREAT_HELP[what]} ${game.rules.treats ? "Each pair of jack-o'-lanterns leaves a treat." : 'Treats begin at 7 pm.'}`);
+    return;
+  }
   hideCard();
   run();
   if (what === 'undo') game.undo();
@@ -378,10 +390,12 @@ function help(what) {
       sound.hint();
       board.show(pair);
       if (what === 'hint') board.float(signed(POINTS.hint), pair[0], true);
+      else toast('The candle shows you a match, for free.');
     }
     if (game.outlook === 'lost') toast("This board can't be won from here: undo, or shuffle.");
   } else if (what === 'shuffle' || what === 'cat') {
     if (!game.shuffle({ cat: what === 'cat' })) toast('No shuffle can help now: undo instead.');
+    else if (what === 'cat') toast('The black cat knocks the tiles about: a free shuffle.');
   } else if (what === 'key') {
     if (!game.treats.key) return;
     board.setKeying(!board.keying);
@@ -399,7 +413,8 @@ function toggleSound() {
 }
 
 function showSound() {
-  $('sound').textContent = sound.muted ? '🔇' : '🔊';
+  $('sound').querySelector('.icon').textContent = sound.muted ? '🔇' : '🔊';
+  $('sound').querySelector('.label').textContent = sound.muted ? 'Sound off' : 'Sound on';
   $('sound').title = sound.muted ? 'Sound is off (M)' : 'Sound is on (M)';
 }
 showSound();
@@ -413,6 +428,8 @@ $('magnify').onchange = (e) => {
   if (board) board.setMagnifier(magnifying ? magnifier : null);
 };
 for (const what of ['undo', 'hint', 'shuffle', 'candle', 'key', 'cat']) $(what).onclick = () => help(what);
+$('hint').title = `A hint, for ${-POINTS.hint} points (H)`;
+$('shuffle').title = `A shuffle, for ${-POINTS.shuffle} points (S)`;
 
 const moon = $('moon');
 moon.onpointerdown = (e) => {

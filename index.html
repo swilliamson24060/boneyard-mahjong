@@ -26,9 +26,11 @@
   <header class="bar top">
     <h1>Boneyard</h1>
     <span id="where"></span>
-    <button id="menu" type="button" title="The Long Night">☾<span class="label"> The night</span></button>
-    <button id="new" type="button" title="A new deal (N)" hidden>↻<span class="label"> New deal</span></button>
-    <button id="sound" type="button" title="Sound (M)">🔊</button>
+    <span class="controls">
+      <button id="menu" type="button" title="The Long Night: every hour, and options"><span class="icon">☾</span><span class="label">Menu</span></button>
+      <button id="new" type="button" title="A new deal (N)" hidden><span class="icon">↻</span><span class="label">New deal</span></button>
+      <button id="sound" type="button" title="Sound (M)"><span class="icon">🔊</span><span class="label">Sound on</span></button>
+    </span>
     <div class="status">
       <span id="clock" hidden></span>
       <span id="souls" hidden></span>
@@ -39,14 +41,14 @@
   </header>
   <main id="table"><div id="board" aria-label="The board"></div></main>
   <footer class="bar bottom">
-    <button id="undo" type="button" title="Undo (U)">↶<span class="label"> Undo</span></button>
-    <button id="hint" type="button" title="A hint, for 15 seconds (H)">🔮<span class="label"> Hint</span></button>
-    <button id="shuffle" type="button" title="Shuffle, for 30 seconds (S)">🔀<span class="label"> Shuffle</span></button>
-    <button id="moon" type="button" title="Hold to see the night side (or hold Space)">🌙<span class="label"> Peek</span></button>
+    <button id="undo" type="button" title="Undo (U)"><span class="icon">↶</span><span class="label">Undo</span></button>
+    <button id="hint" type="button"><span class="icon">🔮</span><span class="label">Hint</span></button>
+    <button id="shuffle" type="button"><span class="icon">🔀</span><span class="label">Shuffle</span></button>
+    <button id="moon" type="button" title="Hold to see the night side (or hold Space)"><span class="icon">🌙</span><span class="label">Peek</span></button>
     <span class="treats">
-      <button id="candle" type="button" title="A candle shows you a match">🕯️ <b>0</b></button>
-      <button id="key" type="button" title="A skeleton key frees one blocked tile">🗝️ <b>0</b></button>
-      <button id="cat" type="button" title="A black cat shuffles for free">🐈‍⬛ <b>0</b></button>
+      <button id="candle" type="button" title="A candle shows you a match, for free"><span class="icon">🕯️<b class="count">0</b></span><span class="label">Free hint</span></button>
+      <button id="key" type="button" title="A skeleton key frees one blocked tile"><span class="icon">🗝️<b class="count">0</b></span><span class="label">Unlock</span></button>
+      <button id="cat" type="button" title="A black cat shuffles the tiles for free"><span class="icon">🐈‍⬛<b class="count">0</b></span><span class="label">Free shuffle</span></button>
     </span>
   </footer>
   <div id="toast" role="status" aria-live="polite"></div>

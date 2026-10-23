@@ -84,6 +84,56 @@ body.night {
   gap: 6px;
 }
 
+.controls {
+  display: flex;
+  gap: 8px;
+}
+
+/* A button in the bars: its icon and a word, beside the icon here and under
+   it on phones. A treat's count sits on its icon while there is one. */
+.bar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.bar button[hidden] {
+  display: none;
+}
+
+.treats button {
+  gap: 10px;
+}
+
+.bar .icon {
+  position: relative;
+  line-height: 1;
+}
+
+.bar .count {
+  position: absolute;
+  top: -8px;
+  right: -11px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #2a1400;
+  font: 700 11px/16px system-ui, -apple-system, sans-serif;
+  text-align: center;
+}
+
+/* A treat there is none of: dimmed, though a tap still says what it does. */
+.bar button.none {
+  opacity: 0.45;
+}
+
+.bar button.none .count {
+  display: none;
+}
+
 button,
 select {
   font: inherit;
@@ -115,8 +165,12 @@ button:disabled {
   cursor: default;
 }
 
-button:not(:disabled):hover {
-  background: rgba(255, 255, 255, 0.16);
+/* Only where there is a pointer to hover: a phone would keep the last button
+   tapped lit. */
+@media (hover: hover) {
+  button:not(:disabled):hover {
+    background: rgba(255, 255, 255, 0.16);
+  }
 }
 
 button.on {
@@ -582,31 +636,80 @@ button.on {
 
 /* --------------------------------------------------------- small screens */
 
+/* Phones, and tablets standing up: each button in the bars is an icon over a
+   word, as in a phone's own apps, and without an outline, so that the seven
+   at the foot fit across a small phone. */
+@media (max-width: 820px), (max-height: 500px) and (orientation: landscape) {
+  .controls,
+  .bottom.bar,
+  .bottom .treats {
+    gap: 2px;
+  }
+  .bottom.bar {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+  .bar button {
+    flex-direction: column;
+    gap: 2px;
+    min-width: 40px;
+    padding: 4px 3px 3px;
+    border-color: transparent;
+    border-radius: 12px;
+    background: none;
+  }
+  .bar .icon {
+    font-size: 21px;
+  }
+  .bar .label {
+    font-size: clamp(9.5px, 2.9vw, 11px);
+    font-weight: 500;
+  }
+  .bar button.on {
+    background: rgba(255, 159, 28, 0.25);
+    border-color: var(--accent);
+  }
+}
+
 @media (max-width: 620px) {
   .bar {
     padding: 6px 8px;
     gap: 6px;
   }
+  /* The game's name over the board's, the buttons beside them, and the
+     score and the clock below. */
   .top {
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'title controls' 'where controls' 'status status';
+    column-gap: 8px;
+    row-gap: 0;
   }
   .top h1 {
+    grid-area: title;
+    align-self: end;
     font-size: 22px;
   }
+  #where {
+    grid-area: where;
+    align-self: start;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 13px;
+  }
+  .controls {
+    grid-area: controls;
+  }
   .status {
+    grid-area: status;
     gap: 10px;
     font-size: 13px;
-    width: 100%;
     justify-content: center;
-    margin-left: 0;
-    order: 3;
+    margin: 2px 0 0;
   }
   button,
   select {
     padding: 6px 10px;
-  }
-  .label {
-    display: none;
   }
 }
 
@@ -630,6 +733,7 @@ button.on {
   }
   .top {
     grid-area: top;
+    display: flex;
   }
   .bottom {
     grid-area: bottom;
@@ -645,9 +749,6 @@ button.on {
     justify-content: center;
     gap: 4px 12px;
     font-size: 13px;
-  }
-  .label {
-    display: none;
   }
   #toast {
     left: calc(50% - 98px);
