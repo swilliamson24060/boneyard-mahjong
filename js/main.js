@@ -118,6 +118,7 @@ function play({ layout, options, seed, replay = [], playedFor = 0, at = -1 }) {
   elapsed = playedFor;
   started = 0;
   finished = false;
+  cover(true); // until its clock starts
   const turn = game.history.find((e) => e.souls);
   woke = turn ? turn.souls.length : 0;
   prompted = false;
@@ -187,8 +188,8 @@ function turned({ souls }) {
 
 // A cleared board: its score, line by line, and the best for its hour kept.
 function won() {
-  hold();
   finished = true;
+  hold();
   const time = played();
   const { total, rows } = scoreOf(game, time);
   const lines = [...rows, ['Score', '', total]];
@@ -250,6 +251,7 @@ function stuck() {
 // turtle's are both kept, so that going from one to the other loses neither.
 function menu(opening = false) {
   hold();
+  if (opening === true) cover(false); // a first board to look at, dealt afresh before it is played
   const playing = game && !finished && opening !== true;
   const night = nightInPlay();
   const actions = [];
@@ -542,6 +544,7 @@ function update() {
     $(t).classList.toggle('none', !g.treats[t]);
   }
   $('key').classList.toggle('on', board.keying);
+  $('pause').disabled = finished;
   $('undo').disabled = !g.history.length;
   $('moon').disabled = !g.turnAhead;
   document.body.classList.toggle('night', g.sideName === 'night');
@@ -568,13 +571,32 @@ function sky() {
 }
 
 // The clock runs while a board is in play, and holds while a card is up.
+// While it holds on a board not yet cleared, the board is hidden, so that
+// no one can study it with the clock stopped.
 function run() {
   if (!started && !finished) started = performance.now();
+  paused = false;
+  cover(false);
 }
 
 function hold() {
   elapsed = played();
   started = 0;
+  cover(!finished);
+}
+
+function cover(on) {
+  document.body.classList.toggle('covered', on);
+}
+
+// A pause, from its button, the P key, or the player leaving the page: the
+// clock stops and the board is hidden until they come back.
+let paused = false;
+function pause() {
+  if (!game || finished || !started) return;
+  hold();
+  showCard('Paused', 'The clock has stopped, and the board is hidden until you come back.', [['Resume', () => (hideCard(), run())]]);
+  paused = true;
 }
 
 const played = () => elapsed + (started ? (performance.now() - started) / 1000 : 0);
@@ -605,6 +627,7 @@ function toast(text) {
 // and only the leaderboard's its places, and the name card its box.
 function showCard(title, text, actions, grid = [], lines = []) {
   shown = null;
+  paused = false;
   $('card-options').hidden = true;
   $('card-input').hidden = true;
   $('card-ranks').hidden = true;
@@ -698,6 +721,7 @@ function showSound() {
 }
 showSound();
 $('new').onclick = newDeal;
+$('pause').onclick = pause;
 
 $('magnify').onchange = (e) => {
   magnifying = e.target.checked;
@@ -738,6 +762,12 @@ document.addEventListener('keydown', (e) => {
   if (act) help(act);
   else if (e.key.toLowerCase() === 'n' && hour < 0) $('new').click();
   else if (e.key.toLowerCase() === 'm') toggleSound();
+  else if (e.key.toLowerCase() === 'p') {
+    if (paused) {
+      hideCard();
+      run();
+    } else pause();
+  }
   else if (e.key === 'Escape') {
     board.setKeying(false);
     board.select(-1);
@@ -763,7 +793,9 @@ new ResizeObserver(() => board && board.fit()).observe($('table'));
 setInterval(tick, 1000);
 addEventListener('pagehide', store);
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) store();
+  if (!document.hidden) return;
+  pause(); // called away: the clock stops while the player is gone
+  store();
 });
 
 // An address of #play/name/seed plays that board freely, going on with it if

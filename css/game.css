@@ -188,6 +188,12 @@ button.on {
   overflow: hidden;
 }
 
+/* While the clock is stopped on a board not yet cleared: paused, or a card
+   up, the board is hidden, so that it cannot be studied for nothing. */
+body.covered #board {
+  visibility: hidden;
+}
+
 #board {
   position: relative;
   --tile-w: 48px;
