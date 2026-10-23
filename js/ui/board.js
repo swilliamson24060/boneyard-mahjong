@@ -9,12 +9,13 @@ const HOLD = 400; // how long a press must last to peek at one tile, in ms
 // sits up and to the right of the one under it, with the tiles' sides
 // showing below and to the left. It draws what the game says, and turns
 // clicks, taps and keys into moves. say(text) reports things for the page
-// to show.
+// to show, and sound, if given, plays a tock for each tile pressed.
 export class Board {
-  constructor(el, game, { say = () => {} } = {}) {
+  constructor(el, game, { say = () => {}, sound = null } = {}) {
     this.el = el;
     this.game = game;
     this.say = say;
+    this.sound = sound;
     this.selected = -1;
     this.keying = false; // the next tile pressed gets the skeleton key
     this.busy = 0; // while the tiles turn over, presses wait
@@ -149,7 +150,10 @@ export class Board {
       if (!g.useKey(i)) this.say('That tile is free already: the key is still yours.');
       return;
     }
-    if (!g.isFree(i)) return this.restart(this.tiles[i].el, 'shake');
+    if (!g.isFree(i)) {
+      if (this.sound) this.sound.blocked();
+      return this.restart(this.tiles[i].el, 'shake');
+    }
     if (this.selected === i) return this.select(-1);
     if (this.selected >= 0 && g.canMatch(this.selected, i)) {
       const a = this.selected;
@@ -157,6 +161,7 @@ export class Board {
       g.match(a, i);
       return;
     }
+    if (this.sound) this.sound.select();
     this.select(i);
   }
 

@@ -13,8 +13,10 @@
 <body>
   <header class="bar top">
     <h1>Boneyard</h1>
-    <select id="pick" aria-label="Board"></select>
-    <button id="new" type="button" title="A new deal (N)">↻<span class="label"> New deal</span></button>
+    <span id="where"></span>
+    <button id="menu" type="button" title="The Long Night">☾<span class="label"> The night</span></button>
+    <button id="new" type="button" title="A new deal (N)" hidden>↻<span class="label"> New deal</span></button>
+    <button id="sound" type="button" title="Sound (M)">🔊</button>
     <div class="status">
       <span id="clock" hidden></span>
       <span id="souls" hidden></span>
@@ -39,6 +41,7 @@
     <div class="inner" role="dialog" aria-modal="true" aria-labelledby="card-title">
       <h2 id="card-title"></h2>
       <p id="card-text"></p>
+      <div class="hours" id="card-grid" hidden></div>
       <div class="actions" id="card-actions"></div>
     </div>
   </div>

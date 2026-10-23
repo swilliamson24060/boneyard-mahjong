@@ -312,11 +312,16 @@ button.on {
 #card {
   position: fixed;
   inset: 0;
-  display: grid;
-  place-items: center;
+  display: flex;
+  overflow-y: auto;
   background: rgba(5, 3, 10, 0.55);
   z-index: 200001;
   padding: 16px;
+}
+
+/* Centred when there is room, and scrolled from its top when there is not. */
+#card .inner {
+  margin: auto;
 }
 
 #card[hidden] {
@@ -349,6 +354,41 @@ button.on {
   gap: 8px;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+#card .hours {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(66px, 1fr));
+  gap: 6px;
+  margin: 0 0 16px;
+}
+
+#card .hours[hidden] {
+  display: none;
+}
+
+#card .hours button {
+  border-radius: 10px;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.25;
+}
+
+#card .hours small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+#where {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+#where b {
+  color: var(--text);
+  font-weight: 600;
 }
 
 /* --------------------------------------------------------- small screens */
@@ -423,5 +463,18 @@ button.on {
   #toast {
     left: calc(50% - 98px);
     bottom: 12px;
+  }
+  #card {
+    padding: 8px;
+  }
+  #card .inner {
+    max-width: 580px;
+    padding: 12px 16px;
+  }
+  #card h2 {
+    font-size: 22px;
+  }
+  #card p {
+    margin-bottom: 8px;
   }
 }

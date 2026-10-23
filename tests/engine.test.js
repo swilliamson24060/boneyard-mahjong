@@ -7,6 +7,7 @@ import { soulsAt } from '../js/engine/midnight.js';
 import { solve } from '../js/engine/solver.js';
 import { Game, TREATS } from '../js/engine/game.js';
 import { seeded } from '../js/engine/rng.js';
+import { HOURS, gameOptions } from '../js/night.js';
 
 const full = (L) => new Uint8Array(L.count).fill(1);
 const facesOf = (...keys) => keys.map((key) => FACE[key]);
@@ -81,6 +82,29 @@ test('the pumpkin has 82 tiles, nine across, and its deals can be won, by day or
     const night = deal(PUMPKIN, [dealPairs(r, 41), dealPairs(r, 41)], r, { turnAt: 20 });
     equal(checkTurnLine(PUMPKIN, night.sides, 20, night.order, `seed ${seed} through midnight`), 0, `seed ${seed}: lost souls`);
   }
+});
+
+test('the Long Night has thirteen boards, none more than nine tiles across', () => {
+  equal(HOURS.length, 13, 'hours');
+  for (const h of HOURS) check(h.layout.width / 2 <= 9, `${h.layout.name} is ${h.layout.width / 2} tiles across`);
+});
+
+test("every hour of the Long Night deals boards that can be won by its own rules, through midnight with no lost souls", () => {
+  HOURS.forEach((hour, i) => {
+    const options = gameOptions(i);
+    for (let seed = 1; seed <= 30; seed++) {
+      const g = new Game(hour.layout, { seed, ...options });
+      let souls = null;
+      for (const [a, b] of g.plan) {
+        const result = g.match(a, b);
+        check(result, `${hour.name}, seed ${seed}: a pair from the deal's own order cannot be taken`);
+        if (result.turned) souls = result.souls.length;
+      }
+      check(g.won, `${hour.name}, seed ${seed}: not cleared`);
+      if (options.turnAt) equal(souls, 0, `${hour.name}, seed ${seed}: lost souls`);
+    }
+  });
+  return `${HOURS.length} hours, 30 deals each`;
 });
 
 test('a layout refuses overlapping tiles, floating tiles and odd numbers', () => {

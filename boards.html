@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boneyard boards</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Creepster&display=swap">
+<link rel="stylesheet" href="css/game.css">
+<style>
+  body { overflow: auto; display: block; padding: 20px 16px 40px; }
+  h1 { font: 400 26px/1 Creepster, fantasy, serif; color: var(--accent); margin: 0 0 4px; }
+  p { color: var(--muted); margin: 0 0 16px; }
+  .sheet { display: flex; flex-wrap: wrap; gap: 18px; }
+  figure { margin: 0; width: 250px; }
+  figcaption { color: var(--muted); font-size: 13px; text-align: center; margin-top: 6px; }
+  .frame { width: 250px; height: 270px; display: grid; place-items: center; }
+  .frame > div { position: relative; }
+</style>
+</head>
+<body>
+  <h1>The boards</h1>
+  <p>The Long Night, hour by hour, dealt as it will be played.</p>
+  <div class="sheet" id="sheet"></div>
+  <script type="module">
+    import { HOURS, gameOptions } from './js/night.js';
+    import { Game } from './js/engine/game.js';
+    import { sprite } from './js/ui/faces.js';
+    import { Board } from './js/ui/board.js';
+
+    document.body.prepend(sprite());
+    HOURS.forEach((hour, i) => {
+      const figure = document.createElement('figure');
+      figure.innerHTML = `<div class="frame"><div></div></div><figcaption>${hour.name}: ${hour.layout.name}, ${hour.layout.count} tiles</figcaption>`;
+      document.getElementById('sheet').append(figure);
+      new Board(figure.querySelector('.frame > div'), new Game(hour.layout, { seed: i + 1, ...gameOptions(i) }));
+    });
+  </script>
+</body>
+</html>
