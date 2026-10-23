@@ -23,7 +23,7 @@ Classic Mah Jong solitaire. You clear a stacked layout by pairing matching tiles
 - Every tile keeps a small corner index (3, E and so on), so Mah Jong players can read it at a glance.
 - Each suit has its own colour and shape.
 - The faces are SVG drawn in code: small, sharp at any size, and easy to recolour.
-- The tone is spooky-fun rather than gory, so it suits all ages, with a No Frights setting for the jumps.
+- The tone is spooky-fun rather than gory, with no jump scares, so it suits all ages.
 
 ## The twists
 
@@ -93,7 +93,7 @@ The classic 144-tile turtle is there too, for wider screens.
 | Thu 29 | Polish | Smooth on phones; No Frights; colour-blind check; offline play; icons |
 | Fri 30 | Ship | Live on a static host; Saturday stays spare |
 
-**Thu 22 Oct:** the engine, Midnight, the board and tiles, and the Long Night are done, six days ahead: thirteen boards from dusk to dawn, kept as you go, with sound. Still to come is the polish: offline play, icons, a colour-blind check, and the planchette for hints. Then shipping.
+**Thu 22 Oct:** everything up to shipping is done, seven days ahead. The Long Night's thirteen boards play from dusk to dawn, kept as you go, with sound. Once loaded the game plays offline and installs as an app with its own icon. Hints come by planchette, and the faces read by shape alone, with no colour. Players who ask their device for less motion get none. The game has only been tried at phone sizes in a desktop browser, so how smoothly it runs on a real phone is still to be seen. Shipping is next.
 
 ## Risks
 

@@ -21,18 +21,23 @@ Then open http://localhost:8790 to play. `tools/serve.py` serves this folder wit
 - Pairs of jack-o'-lanterns leave treats: a candle shows a match, a skeleton key frees one blocked tile (press the key, then the tile), and a black cat shuffles for free.
 - Any board can also be played freely by address: `#play/turtle` for the classic turtle, or `#play/raven/12345/40` for the raven, dealt from seed 12345, turning over after 40 matches. A new deal (N) deals it again.
 
+## Offline, and on a phone's home screen
+
+Once loaded, the game plays offline: `sw.js`, a service worker, keeps every file it needs, and the font. While there is a network it still fetches each file fresh, so a new version shows at once. A file added to the game must also be added to `FILES` in `sw.js`, with a new name for `CACHE`; the test page checks that nothing is missing. `manifest.webmanifest` lets a phone install it from the browser (Share, then Add to Home Screen, on an iPhone), with its own icon. `tools/icons.py` draws the icon in plain Python and writes `icons/`: `python3 tools/icons.py`.
+
 ## Tests and sheets
 
 - http://localhost:8790/test.html runs the engine tests in the page; the tab's title shows the result. Below the results is a dealt turtle drawn plainly, with its free tiles outlined, for checking layouts by eye.
-- http://localhost:8790/faces.html shows every face by day and by night, and small, at the size of a tile on an upright phone.
+- http://localhost:8790/faces.html shows every face by day and by night, and small, at the size of a tile on an upright phone. Its switch shows them as each kind of colour blindness sees them, or with no colour at all (`faces.html?vision=achromatopsia`): every face reads by its shape alone.
 - http://localhost:8790/boards.html shows the thirteen boards of the Long Night, dealt as they will be played.
 
 ## Where things live
 
 - `index.html`, `css/game.css` and `js/main.js`: the page, the buttons and keys, the cards, the clock, the sky, and keeping the night between visits.
+- `sw.js`, `manifest.webmanifest` and `icons/`: offline play, and installing the game as an app.
 - `js/night.js`: the Long Night's thirteen hours: each one's board, rules, sky and the words before it.
 - `js/ui/sound.js`: the sounds, made with Web Audio as they play: the tiles, the organ, the bells.
-- `js/ui/board.js`: the board on the page: the tiles stacked in their layers and sized to fit, selecting and matching, peeking, and the tiles turning over.
+- `js/ui/board.js`: the board on the page: the tiles stacked in their layers and sized to fit, selecting and matching, peeking, the tiles turning over, and the planchette that points out a hint. Players who have asked their device for less motion get no shaking or turning waves.
 - `js/ui/faces.js`: the faces, drawn in code as SVG symbols, one drawing for both sides.
 - `js/engine/tiles.js`: the 42 faces, which of them match, and the pairs a deal is made from.
 - `js/engine/layout.js`: reading a layout drawn as text, and the free-tile rule. `layouts.js` holds the layouts themselves.

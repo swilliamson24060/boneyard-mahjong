@@ -403,6 +403,9 @@ document.addEventListener('keyup', (e) => {
   }
 });
 
+// Offline play: sw.js keeps every file the game needs.
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
 new ResizeObserver(() => board && board.fit()).observe($('table'));
 setInterval(tick, 1000);
 addEventListener('pagehide', () => hour >= 0 && store());

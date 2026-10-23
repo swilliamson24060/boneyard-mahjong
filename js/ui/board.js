@@ -4,6 +4,28 @@ import { symbolId } from './faces.js';
 const SVG = 'http://www.w3.org/2000/svg';
 const LIFT = 0.11; // how far each layer sits up and to the right, in tile widths
 const HOLD = 400; // how long a press must last to peek at one tile, in ms
+const WINDOW = 42 / 110; // how far down the planchette its window sits
+
+// Players who have asked their device for less motion get no shaking or
+// turning waves: things simply change, and a hint glows without pulsing.
+const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// The planchette that points out a hint: heart-shaped wood with a glass
+// window near its point, which comes to rest over a tile.
+function planchette() {
+  const el = document.createElement('div');
+  el.className = 'planchette';
+  el.setAttribute('aria-hidden', 'true');
+  el.innerHTML =
+    '<svg viewBox="0 0 100 110">' +
+    '<path d="M50 3 C62 22 96 44 94 70 C92 94 70 107 50 107 C30 107 8 94 6 70 C4 44 38 22 50 3 Z" fill="#c8955a" stroke="#5b3a1a" stroke-width="3"/>' +
+    '<path d="M50 15 C60 31 86 50 84 70 C82 89 66 98 50 98 C34 98 18 89 16 70 C14 50 40 31 50 15 Z" fill="none" stroke="#e7c08a" stroke-width="1.5" opacity="0.7"/>' +
+    '<circle cx="50" cy="42" r="15" fill="rgba(255,255,240,0.18)" stroke="#5b3a1a" stroke-width="3"/>' +
+    '<path d="M42 35 Q46 31 51 31" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.7"/>' +
+    '<circle cx="34" cy="76" r="2.4" fill="#5b3a1a"/><circle cx="66" cy="76" r="2.4" fill="#5b3a1a"/><circle cx="50" cy="88" r="2.4" fill="#5b3a1a"/>' +
+    '</svg>';
+  return el;
+}
 
 // The board on the page: one button per tile, stacked so that each layer
 // sits up and to the right of the one under it, with the tiles' sides
@@ -206,6 +228,10 @@ export class Board {
   turnOver(from) {
     const g = this.game;
     const L = g.layout;
+    if (still()) {
+      for (let i = 0; i < L.count; i++) if (g.present[i]) this.paint(i);
+      return;
+    }
     this.busy++;
     let last = 0;
     for (let i = 0; i < L.count; i++) {
@@ -228,12 +254,45 @@ export class Board {
     for (let i = 0; i < g.layout.count; i++) if (g.present[i]) this.paint(i, on && g.turnAhead ? 1 : g.side);
   }
 
+  // A hint: the planchette glides to one tile of the pair and then the
+  // other, and the two of them glow.
   show(pair) {
     for (const i of pair) this.restart(this.tiles[i].el, 'hint');
+    if (!this.planchette) {
+      this.planchette = planchette();
+      this.el.append(this.planchette);
+      this.glide(this.el.offsetWidth / 2, this.el.offsetHeight + this.planchette.offsetHeight);
+    }
+    const p = this.planchette;
+    const centre = (i) => {
+      const t = this.tiles[i].el;
+      return [t.offsetLeft + t.offsetWidth / 2, t.offsetTop + t.offsetHeight / 2];
+    };
+    clearTimeout(this.gliding);
+    void p.offsetWidth;
+    p.classList.add('on');
+    this.glide(...centre(pair[0]));
+    this.gliding = setTimeout(() => {
+      this.glide(...centre(pair[1]));
+      this.gliding = setTimeout(() => p.classList.remove('on'), 1500);
+    }, 700);
+  }
+
+  // Moves the planchette so that its window sits over a point on the board.
+  glide(x, y) {
+    const p = this.planchette;
+    p.style.transform = `translate(${x - p.offsetWidth / 2}px, ${y - p.offsetHeight * WINDOW}px)`;
   }
 
   // Plays an animation on a tile from the start, and takes it off at the end.
   restart(el, name) {
+    if (still()) {
+      if (name === 'hint') {
+        el.classList.add('hint');
+        setTimeout(() => el.classList.remove('hint'), 2400);
+      }
+      return;
+    }
     el.classList.remove(name);
     void el.offsetWidth;
     el.classList.add(name);
