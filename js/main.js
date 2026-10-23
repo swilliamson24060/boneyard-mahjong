@@ -41,16 +41,17 @@ let woke = 0;
 let prompted = false;
 
 // What is kept between visits: the latest hour reached, the best time and
-// the best score for each hour, with the time that score took, the board in
-// play as its seed and its moves, and the player's name on the leaderboard,
-// with what has been posted there.
-let saved = { reached: 0, best: {}, scores: {}, times: {}, playing: null, name: '', declined: false, posted: {} };
+// the best score for each hour, with the time that score took, the boards in
+// play, the night's and the one outside it, each as its seed and its moves,
+// and the player's name on the leaderboard, with what has been posted there.
+let saved = { reached: 0, best: {}, scores: {}, times: {}, playing: null, free: null, name: '', declined: false, posted: {} };
 try {
   saved = { ...saved, ...JSON.parse(localStorage.getItem('boneyard.night')) };
 } catch {}
 
 function store() {
-  if (saved.playing) saved.playing.elapsed = played();
+  const onTable = hour >= 0 ? saved.playing : saved.free; // while it is not yet cleared
+  if (onTable) onTable.elapsed = played();
   try {
     localStorage.setItem('boneyard.night', JSON.stringify(saved));
   } catch {}
@@ -72,8 +73,10 @@ const leaderboard = new Leaderboard();
 // ------------------------------------------------------------- the boards
 
 // Sets up a board: deals it from its seed, plays back any moves already
-// made on it, and puts it on the page.
+// made on it, and puts it on the page. The board it takes the place of is
+// kept first, with all the time played on it.
 function play({ layout, options, seed, replay = [], playedFor = 0, at = -1 }) {
+  if (game && !finished) store();
   hideCard();
   hour = at;
   game = new Game(layout, { seed, ...options });
@@ -133,7 +136,7 @@ function redo([what, a, b]) {
 
 function record(move) {
   moves.push(move);
-  if (hour >= 0) store();
+  store();
   update();
 }
 
@@ -154,12 +157,21 @@ function beginHour(at, keep = null) {
 }
 
 // A board outside the night, as often as you like: the turtle, or any of the
-// night's boards by name, with or without a midnight.
-function freePlay(key = 'turtle', seed = newSeed(), turnAt = 0) {
+// night's boards by name, with or without a midnight. Like the night's, the
+// board in play is kept, to go on with after a reload or a visit to the
+// night: `keep` is that board.
+let freeKey = 'turtle'; // the board free play deals,
+let freeTurn = 0; // and after how many matches its tiles turn over, if they do
+function freePlay(key = 'turtle', seed = newSeed(), turnAt = 0, keep = null) {
   if (!FREE[key]) key = 'turtle';
-  play({ layout: FREE[key], options: turnAt ? { turnAt } : {}, seed });
+  freeKey = key;
+  freeTurn = turnAt;
+  play({ layout: FREE[key], options: turnAt ? { turnAt } : {}, seed, replay: keep ? keep.moves : [], playedFor: keep ? keep.elapsed : 0 });
+  saved.free = { key, seed, turnAt, moves, elapsed };
+  store();
   history.replaceState(null, '', `#play/${key}/${seed}${turnAt ? `/${turnAt}` : ''}`);
   run();
+  if (keep && keep.moves.length) toast(`Back to your ${game.layout.name.toLowerCase()}.`);
 }
 
 function turned({ souls }) {
@@ -183,8 +195,9 @@ function won() {
   const timing = `In ${clock(time)}, against a par of ${clock(par(game))}.`;
   update();
   if (hour < 0) {
-    const key = location.hash.split('/')[1];
-    showCard('The board is clear!', timing, [['Deal again', () => freePlay(key)], ['The Long Night', menu]], [], lines);
+    saved.free = null;
+    store();
+    showCard('The board is clear!', timing, [['Deal again', () => freePlay(freeKey, newSeed(), freeTurn)], ['Back to the Long Night', toNight]], [], lines);
     return;
   }
   const spec = HOURS[hour];
@@ -202,7 +215,7 @@ function won() {
   if (hour === HOURS.length - 1) {
     showCard('Dawn', `The sun is up, and you have seen the Long Night through. ${nightScore()}`, [
       ['Begin again', () => beginHour(0)],
-      ['The turtle', () => freePlay('turtle')],
+      ['Play the turtle', toTurtle],
       ...toLeaderboard(boardOf(hour)),
     ], [], lines);
   } else {
@@ -227,32 +240,103 @@ function stuck() {
   const actions = [['Shuffle', () => help('shuffle')], ['Undo', () => help('undo')]];
   if (game.treats.cat) actions.unshift(['Black cat', () => help('cat')]);
   if (game.treats.key) actions.push(['Skeleton key', () => help('key')]);
-  showCard('No pairs left', 'Shuffle the tiles left, or take back a move.', actions);
+  actions.push(['Give up', giveUp]);
+  showCard('No pairs left', 'Shuffle the tiles left, take back a move, or give up the board.', actions);
 }
 
-// The Long Night's own card: go on, begin, any hour reached so far, or free
-// play. On a first visit it opens over the first board, not yet begun.
+// The menu: back to the board or give it up, the Long Night or the turtle,
+// any hour reached so far, and the leaderboard. On a first visit it opens
+// over the first board, not yet begun. The night's board in play and the
+// turtle's are both kept, so that going from one to the other loses neither.
 function menu(opening = false) {
   hold();
+  const playing = game && !finished && opening !== true;
+  const night = nightInPlay();
   const actions = [];
-  if (game && !finished && opening !== true) actions.push(['Back to the board', () => (hideCard(), run())]);
-  const p = saved.playing;
-  const inPlay = p && (p.hour > 0 || p.moves.length > 0); // a board begun and not yet cleared
-  if (inPlay && p.hour !== hour) actions.push([`Go on at ${HOURS[p.hour].name}`, () => beginHour(p.hour, p)]);
-  else if (!inPlay && saved.reached > 0) actions.push([`On to ${HOURS[saved.reached].name}`, () => beginHour(saved.reached)]);
-  actions.push([saved.reached > 0 || inPlay ? 'Begin again at 6 pm' : 'Begin at 6 pm', () => beginHour(0)]);
-  if (hour >= 0 || !game) actions.push(['The turtle', () => freePlay('turtle')]);
+  if (playing) actions.push(['Back to the board', () => (hideCard(), run())]);
+  if (playing && moves.length) actions.push(['Give up this board', giveUp]);
+  if (hour < 0) actions.push(['Back to the Long Night', toNight]);
+  else if (!night) actions.push(saved.reached > 0 ? [`On to ${HOURS[saved.reached].name}`, () => beginHour(saved.reached)] : ['Begin at 6 pm', () => beginHour(0)]);
+  if (hour >= 0) actions.push(['Play the turtle', toTurtle]);
   if (leaderboard.on) actions.push(['Leaderboard', () => showLeaderboard(hour >= 0 ? boardOf(hour) : NIGHT)]);
   const hours = HOURS.map((h, i) => ({
     label: h.name,
     sub: saved.scores[i] !== undefined ? `★ ${signed(saved.scores[i], '')}` : '',
-    act: () => beginHour(i),
+    act: () => toHour(i),
     disabled: i > saved.reached,
+    on: night && night.hour === i,
   }));
   const intro = 'Thirteen boards, one an hour from dusk to dawn. Each hour you reach can be played again.';
   showCard('The Long Night', `${intro} ${nightScore()}`.trim(), actions, hours);
   $('magnify').checked = magnifying;
   $('card-options').hidden = false;
+}
+
+// The night's board in play: come to, or begun, and not yet cleared.
+function nightInPlay() {
+  const p = saved.playing;
+  return p && HOURS[p.hour] && (p.hour > 0 || p.moves.length > 0) ? p : null;
+}
+
+// An hour from the menu: the night's board in play, if it is at that hour,
+// or else the hour dealt afresh, once the player has agreed to give up a
+// board begun at another hour.
+function toHour(i) {
+  const night = nightInPlay();
+  if (night && night.hour === i) {
+    if (hour === i) {
+      hideCard();
+      run();
+    } else beginHour(i, night);
+    return;
+  }
+  if (night && night.moves.length) {
+    askToLose({ which: `your board at ${HOURS[night.hour].name}`, then: `${HOURS[i].name} begins`, go: () => beginHour(i), back: () => menu(), keep: 'Keep it' });
+    return;
+  }
+  beginHour(i);
+}
+
+// Back to the Long Night: its board in play, or the latest hour reached.
+function toNight() {
+  const p = saved.playing;
+  if (p && HOURS[p.hour]) beginHour(p.hour, p);
+  else beginHour(saved.reached);
+}
+
+// The turtle: the one in play, if there is one, or else a new deal, once the
+// player has agreed to give up any other board begun outside the night.
+function toTurtle() {
+  const f = saved.free;
+  if (f && f.key === 'turtle') freePlay('turtle', f.seed, f.turnAt, f);
+  else if (f && f.moves.length) {
+    askToLose({ which: `your ${FREE[f.key].name.toLowerCase()}`, then: 'a turtle is dealt', go: () => freePlay('turtle'), back: () => menu(), keep: 'Keep it' });
+  } else freePlay('turtle');
+}
+
+// Gives up the board in play, once the player has said so: the same hour of
+// the night deals again, or the same board outside it.
+function giveUp() {
+  askToLose({
+    which: 'this board',
+    then: hour >= 0 ? `${HOURS[hour].name} deals again` : 'a new one is dealt',
+    go: hour >= 0 ? () => beginHour(hour) : () => freePlay(freeKey, newSeed(), freeTurn),
+    back: () => (hideCard(), run()),
+  });
+}
+
+// A new deal outside the night: at once, unless this one has moves to lose.
+function newDeal() {
+  if (!finished && moves.length) giveUp();
+  else freePlay(freeKey, newSeed(), freeTurn);
+}
+
+// Asks before throwing away a board with moves on it: which board, and what
+// happens instead. The way back, `keep`, comes first, so that a key pressed
+// without thinking keeps the board.
+function askToLose({ which, then, go, back, keep = 'Keep playing' }) {
+  hold();
+  showCard(`Give up ${which}?`, `The moves made on it will be lost, and ${then}.`, [[keep, back], ['Give up', go]]);
 }
 
 // -------------------------------------------------------- the leaderboard
@@ -613,7 +697,7 @@ function showSound() {
   $('sound').title = sound.muted ? 'Sound is off (M)' : 'Sound is on (M)';
 }
 showSound();
-$('new').onclick = () => freePlay(location.hash.split('/')[1]);
+$('new').onclick = newDeal;
 
 $('magnify').onchange = (e) => {
   magnifying = e.target.checked;
@@ -677,19 +761,23 @@ if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catc
 
 new ResizeObserver(() => board && board.fit()).observe($('table'));
 setInterval(tick, 1000);
-addEventListener('pagehide', () => hour >= 0 && store());
+addEventListener('pagehide', store);
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden && hour >= 0) store();
+  if (document.hidden) store();
 });
 
-// An address of #play/name/seed plays that board freely; otherwise the night
-// goes on where it was left, or begins, as it does for a visitor who only
-// looked at the first board last time.
+// An address of #play/name/seed plays that board freely, going on with it if
+// it is the one kept (as it is when the page is reloaded); otherwise the
+// night goes on where it was left, or begins, as it does for a visitor who
+// only looked at the first board last time.
 const [mode, key, seed, turnAt] = location.hash.slice(1).split('/');
 const p = saved.playing;
+const f = saved.free;
 const goingOn = p && HOURS[p.hour] && (saved.reached > 0 || p.hour > 0 || p.moves.length > 0);
-if (mode === 'play') freePlay(key, Number(seed) || newSeed(), Number(turnAt) || 0);
-else if (goingOn) beginHour(p.hour, p);
+if (mode === 'play') {
+  const kept = f && f.key === key && (!seed || f.seed === Number(seed)) && f.turnAt === (Number(turnAt) || 0) ? f : null;
+  freePlay(key, kept ? kept.seed : Number(seed) || newSeed(), Number(turnAt) || 0, kept);
+} else if (goingOn) beginHour(p.hour, p);
 else {
   beginHour(0);
   menu(true);

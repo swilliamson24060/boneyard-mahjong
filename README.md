@@ -15,13 +15,14 @@ Then open http://localhost:8790 to play. `tools/serve.py` serves this folder wit
 ## Playing
 
 - The Long Night is thirteen boards, one an hour from 6 pm to 6 am. Each hour says what is new before it starts, and every hour reached can be played again from the night's card (☾). The board in play is kept as you go, so closing the page loses nothing.
+- The menu (☾) goes from the Long Night to the turtle and back: Play the turtle, and Back to the Long Night. The board in play in each is kept, so going to one never loses the other. Give up this board deals the board in play again, and anything that would throw away a board with moves on it asks first; choosing the hour you are playing just goes back to it.
 - Take two free tiles that match. A tile is free when nothing lies on it and its left or right side is open.
 - Hold a tile to see it up close, above your finger, and slide to look at the tiles around it. On a phone this is on from the start; the switch on the night's card (☾) turns it on or off on any screen.
 - Undo (U), Hint (H), Shuffle (S), sound on and off (M). Arrow keys move between free tiles, and Enter takes one. Every button has a word as well as its icon: beside it on a wide screen, under it on a phone.
 - Each pair is worth 10 points and a cleared board 250, with 2 more for every second under par. A shuffle costs 100 and a hint 25; treats and undo are free. Turning over at midnight without a lost soul earns 150, and each lost soul costs 10. `js/score.js` holds the numbers, and PLAN.md the reasons.
 - From midnight the tiles turn over partway through each board. Hold the moon button or Space to see the night side. A tile held up close shows its night side beside it, or with the magnifier off, turns over while you hold it. Pairs that match on both sides are the ones to take before midnight.
 - Pairs of jack-o'-lanterns leave treats, whose buttons say what they do: a candle is a free hint, a skeleton key unlocks one blocked tile (press Unlock, then the tile), and a black cat is a free shuffle. A treat you have none of says what it does when you tap it.
-- Any board can also be played freely by address: `#play/turtle` for the classic turtle, or `#play/raven/12345/40` for the raven, dealt from seed 12345, turning over after 40 matches. A new deal (N) deals it again.
+- Any board can also be played freely by address: `#play/turtle` for the classic turtle, or `#play/raven/12345/40` for the raven, dealt from seed 12345, turning over after 40 matches. A new deal (N) deals it again. The board played freely is kept like the night's, so a reload goes on with it.
 - The leaderboard, on the night's card, lists the best scores at each hour of the Long Night, and for the whole night: each player's bests added up. The first time you clear a board, its card offers to put you on it under a name of your choosing, and from then on your bests go up as you make them. Your name can be changed, or taken off with your scores, from the leaderboard's card. Free play doesn't count.
 
 ## The leaderboard
