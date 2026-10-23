@@ -2,6 +2,36 @@ import { parseLayout } from './layout.js';
 
 // The layouts, drawn as text (layout.js says how to read them).
 
+// A pumpkin with its stem, 82 tiles on three layers and nine across, so it
+// fits a phone held upright: the gentle first board of the night.
+export const PUMPKIN = parseLayout('Pumpkin', [
+  `
+  ....#....
+  ..#####..
+  .#######.
+  #########
+  #########
+  #########
+  .#######.
+  ..#####..
+  `,
+  `
+  .........
+  .........
+  ..#####..
+  .#######.
+  .#######.
+  ..#####..
+  `,
+  `
+  .........
+  .........
+  .........
+  ...###...
+  ...###...
+  `,
+]);
+
 // The classic turtle: the full set of 144 on five layers, with one tile at
 // the left end and two at the right sitting between the middle rows.
 export const TURTLE = parseLayout('Turtle', [

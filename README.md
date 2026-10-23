@@ -10,14 +10,25 @@ ES modules need a web server (opening the files from the file system will not wo
 python3 tools/serve.py
 ```
 
-`tools/serve.py` serves this folder at http://localhost:8790 with caching turned off, so a reload always picks up edited files. `python3 -m http.server` works too.
+Then open http://localhost:8790 to play. `tools/serve.py` serves this folder with caching turned off, so a reload always picks up edited files; `python3 -m http.server` works too. The address keeps the board and the deal, as `#pumpkin-midnight/12345`, so a deal can be had again or shared.
 
-## Tests
+## Playing
 
-Open http://localhost:8790/test.html. The engine tests run in the page, and the tab's title shows the result. Below the results is a dealt turtle drawn plainly, with its free tiles outlined, for checking layouts by eye.
+- Take two free tiles that match. A tile is free when nothing lies on it and its left or right side is open.
+- Undo (U), Hint (H, costs 15 seconds), Shuffle (S, costs 30 seconds), a new deal (N). Arrow keys move between free tiles, and Enter takes one.
+- On a board that turns over at midnight, hold the moon button or Space to see the night side, or press and hold one tile to see its own. Pairs that match on both sides are the ones to take before midnight.
+- Pairs of jack-o'-lanterns leave treats: a candle shows a match, a skeleton key frees one blocked tile (press the key, then the tile), and a black cat shuffles for free.
+
+## Tests and sheets
+
+- http://localhost:8790/test.html runs the engine tests in the page; the tab's title shows the result. Below the results is a dealt turtle drawn plainly, with its free tiles outlined, for checking layouts by eye.
+- http://localhost:8790/faces.html shows every face by day and by night, and small, at the size of a tile on an upright phone.
 
 ## Where things live
 
+- `index.html`, `css/game.css` and `js/main.js`: the page, the buttons and keys, the clock and the messages.
+- `js/ui/board.js`: the board on the page: the tiles stacked in their layers and sized to fit, selecting and matching, peeking, and the tiles turning over.
+- `js/ui/faces.js`: the faces, drawn in code as SVG symbols, one drawing for both sides.
 - `js/engine/tiles.js`: the 42 faces, which of them match, and the pairs a deal is made from.
 - `js/engine/layout.js`: reading a layout drawn as text, and the free-tile rule. `layouts.js` holds the layouts themselves.
 - `js/engine/deal.js`: dealing so that every board can be won, and the safe shuffle.

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boneyard faces</title>
+<link rel="stylesheet" href="css/game.css">
+<style>
+  body { overflow: auto; display: block; padding: 20px 16px 40px; }
+  h1 { font: 400 26px/1 Creepster, fantasy, serif; color: var(--accent); margin: 0 0 4px; }
+  p { color: var(--muted); margin: 0 0 16px; }
+  .sheet { display: flex; flex-wrap: wrap; gap: 14px 10px; margin-bottom: 28px; }
+  .cell { width: 74px; text-align: center; font-size: 11px; color: var(--muted); }
+  .cell .tile { position: relative; display: block; margin: 0 0 6px 6px; --tile-w: 66px; --tile-h: 88px; --lift: 6px; --gap: 2px; cursor: default; }
+  .small .cell { width: 40px; }
+  .small .cell .tile { --tile-w: 34px; --tile-h: 45px; --lift: 4px; }
+</style>
+</head>
+<body>
+  <h1>The faces</h1>
+  <p>Every face by day, by night, and small by day at the size of a tile on an upright phone.</p>
+  <div class="sheet" id="day"></div>
+  <div class="sheet" id="night"></div>
+  <div class="sheet small" id="small"></div>
+  <script type="module">
+    import { FACES } from './js/engine/tiles.js';
+    import { sprite, symbolId } from './js/ui/faces.js';
+
+    document.body.prepend(sprite());
+    for (const [id, night] of [['day', false], ['night', true], ['small', false]]) {
+      const sheet = document.getElementById(id);
+      for (const f of FACES) {
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.innerHTML = `<div class="tile${night ? ' night' : ''}"><svg viewBox="0 0 60 80"><use href="#${symbolId(f.id)}"></use></svg></div>${id === 'small' ? '' : f.name}`;
+        sheet.append(cell);
+      }
+    }
+  </script>
+</body>
+</html>

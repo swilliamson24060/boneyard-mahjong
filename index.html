@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#170f24">
+<title>Boneyard Mah Jong</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Creepster&display=swap">
+<link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+  <header class="bar top">
+    <h1>Boneyard</h1>
+    <select id="pick" aria-label="Board"></select>
+    <button id="new" type="button" title="A new deal (N)">↻<span class="label"> New deal</span></button>
+    <div class="status">
+      <span id="clock" hidden></span>
+      <span id="souls" hidden></span>
+      <span id="left"></span>
+      <span id="time"></span>
+    </div>
+  </header>
+  <main id="table"><div id="board" aria-label="The board"></div></main>
+  <footer class="bar bottom">
+    <button id="undo" type="button" title="Undo (U)">↶<span class="label"> Undo</span></button>
+    <button id="hint" type="button" title="A hint, for 15 seconds (H)">🔮<span class="label"> Hint</span></button>
+    <button id="shuffle" type="button" title="Shuffle, for 30 seconds (S)">🔀<span class="label"> Shuffle</span></button>
+    <button id="moon" type="button" title="Hold to see the night side (or hold Space)">🌙<span class="label"> Peek</span></button>
+    <span class="treats">
+      <button id="candle" type="button" title="A candle shows you a match">🕯️ <b>0</b></button>
+      <button id="key" type="button" title="A skeleton key frees one blocked tile">🗝️ <b>0</b></button>
+      <button id="cat" type="button" title="A black cat shuffles for free">🐈‍⬛ <b>0</b></button>
+    </span>
+  </footer>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="card" hidden>
+    <div class="inner" role="dialog" aria-modal="true" aria-labelledby="card-title">
+      <h2 id="card-title"></h2>
+      <p id="card-text"></p>
+      <div class="actions" id="card-actions"></div>
+    </div>
+  </div>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

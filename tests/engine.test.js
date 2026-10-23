@@ -1,6 +1,6 @@
 import { test, check, equal, throws } from './run.js';
 import { parseLayout, makeLayout, isFree } from '../js/engine/layout.js';
-import { TURTLE } from '../js/engine/layouts.js';
+import { TURTLE, PUMPKIN } from '../js/engine/layouts.js';
 import { FACES, SET, FACE, MATCH, LOST, dealPairs } from '../js/engine/tiles.js';
 import { deal, redeal } from '../js/engine/deal.js';
 import { soulsAt } from '../js/engine/midnight.js';
@@ -69,6 +69,18 @@ test('the turtle has 144 tiles on layers of 87, 36, 16, 4 and 1, 15 tiles across
   equal(layers.join(), '87,36,16,4,1', 'layers');
   equal(TURTLE.width / 2, 15, 'tiles across');
   equal(TURTLE.height / 2, 8, 'tiles down');
+});
+
+test('the pumpkin has 82 tiles, nine across, and its deals can be won, by day or through midnight', () => {
+  equal(PUMPKIN.count, 82, 'tiles');
+  equal(PUMPKIN.width / 2, 9, 'tiles across');
+  for (let seed = 1; seed <= 200; seed++) {
+    const r = seeded(seed);
+    const day = deal(PUMPKIN, [dealPairs(r, 41)], r);
+    checkLine(PUMPKIN, day.sides[0], full(PUMPKIN), day.order, `seed ${seed}`);
+    const night = deal(PUMPKIN, [dealPairs(r, 41), dealPairs(r, 41)], r, { turnAt: 20 });
+    equal(checkTurnLine(PUMPKIN, night.sides, 20, night.order, `seed ${seed} through midnight`), 0, `seed ${seed}: lost souls`);
+  }
 });
 
 test('a layout refuses overlapping tiles, floating tiles and odd numbers', () => {

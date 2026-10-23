@@ -93,7 +93,7 @@ The classic 144-tile turtle is there too, for wider screens.
 | Thu 29 | Polish | Smooth on phones; No Frights; colour-blind check; offline play; icons |
 | Fri 30 | Ship | Live on a static host; Saturday stays spare |
 
-**Thu 22 Oct:** the engine and Midnight are done, with their tests passing, three days ahead. The board and tiles are next.
+**Thu 22 Oct:** the engine, Midnight, and the board and tiles are done, five days ahead: the game plays on desktop and on phones, upright and on their side, with the pumpkin and the turtle to choose from. The Long Night is next.
 
 ## Risks
 

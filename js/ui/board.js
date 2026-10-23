@@ -1,0 +1,270 @@
+import { FACES, LOST } from '../engine/tiles.js';
+import { symbolId } from './faces.js';
+
+const SVG = 'http://www.w3.org/2000/svg';
+const LIFT = 0.11; // how far each layer sits up and to the right, in tile widths
+const HOLD = 400; // how long a press must last to peek at one tile, in ms
+
+// The board on the page: one button per tile, stacked so that each layer
+// sits up and to the right of the one under it, with the tiles' sides
+// showing below and to the left. It draws what the game says, and turns
+// clicks, taps and keys into moves. say(text) reports things for the page
+// to show.
+export class Board {
+  constructor(el, game, { say = () => {} } = {}) {
+    this.el = el;
+    this.game = game;
+    this.say = say;
+    this.selected = -1;
+    this.keying = false; // the next tile pressed gets the skeleton key
+    this.busy = 0; // while the tiles turn over, presses wait
+    this.held = -1; // the tile being peeked at with a long press
+    this.swallowUntil = 0; // the click that ends a long press is not a press
+    this.tiles = [];
+    this.build();
+    game.on('match', (m) => this.matched(m));
+    game.on('undo', (entry) => this.undone(entry));
+    game.on('shuffle', () => this.shuffled());
+    game.on('key', () => this.refresh());
+  }
+
+  build() {
+    const L = this.game.layout;
+    const el = this.el;
+    el.replaceChildren();
+    // In the page in reading order, so Tab goes row by row; the stacking
+    // comes from z-index: upper layers over lower, and within a layer each
+    // tile over the one above it and the one to its right, whose sides
+    // would otherwise show over it.
+    const order = [...L.x.keys()].sort((a, b) => L.y[a] - L.y[b] || L.x[a] - L.x[b] || L.z[a] - L.z[b]);
+    for (const i of order) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'tile';
+      button.dataset.i = i;
+      button.style.zIndex = L.z[i] * 10000 + L.y[i] * 100 + (99 - L.x[i]);
+      const svg = document.createElementNS(SVG, 'svg');
+      svg.setAttribute('viewBox', '0 0 60 80');
+      svg.setAttribute('aria-hidden', 'true');
+      const use = document.createElementNS(SVG, 'use');
+      svg.append(use);
+      button.append(svg);
+      this.tiles[i] = { el: button, use };
+      el.append(button);
+    }
+
+    el.onclick = (e) => {
+      const t = e.target.closest('.tile');
+      if (!t || performance.now() < this.swallowUntil) return;
+      this.press(Number(t.dataset.i));
+    };
+    el.oncontextmenu = (e) => e.preventDefault();
+    el.onpointerdown = (e) => {
+      const t = e.target.closest('.tile');
+      if (!t || !this.game.turnAhead) return;
+      const i = Number(t.dataset.i);
+      clearTimeout(this.holding);
+      this.holding = setTimeout(() => {
+        this.held = i;
+        this.paint(i, 1);
+      }, HOLD);
+    };
+    el.onpointerup = el.onpointercancel = el.onpointerleave = () => {
+      clearTimeout(this.holding);
+      if (this.held < 0) return;
+      this.paint(this.held);
+      this.held = -1;
+      this.swallowUntil = performance.now() + 500;
+    };
+    el.onkeydown = (e) => {
+      if (!e.key.startsWith('Arrow')) return;
+      e.preventDefault();
+      this.move(e.key);
+    };
+
+    for (let i = 0; i < L.count; i++) this.paint(i);
+    this.refresh();
+    this.fit();
+  }
+
+  // Sizes the tiles to fill the space the board has, and places them.
+  fit() {
+    const L = this.game.layout;
+    const box = this.el.parentElement.getBoundingClientRect();
+    const cols = L.width / 2;
+    const rows = L.height / 2;
+    const deep = L.depth - 1;
+    const pad = 10;
+    const across = cols + (deep + 1.6) * LIFT;
+    const down = (rows * 4) / 3 + (deep + 1.6) * LIFT;
+    const w = Math.max(16, Math.floor(Math.min((box.width - 2 * pad) / across, (box.height - 2 * pad) / down, 84)));
+    const h = Math.round((w * 4) / 3);
+    const lift = Math.max(2, Math.round(w * LIFT));
+    const s = this.el.style;
+    s.setProperty('--tile-w', `${w}px`);
+    s.setProperty('--tile-h', `${h}px`);
+    s.setProperty('--lift', `${lift}px`);
+    s.setProperty('--gap', `${Math.max(1, Math.round(w * 0.04))}px`);
+    s.width = `${Math.ceil(cols * w + (deep + 1.6) * lift)}px`;
+    s.height = `${Math.ceil(rows * h + (deep + 1.6) * lift)}px`;
+    for (let i = 0; i < L.count; i++) {
+      const t = this.tiles[i].el.style;
+      t.left = `${Math.round(1.4 * lift + (L.x[i] / 2) * w + L.z[i] * lift)}px`;
+      t.top = `${Math.round((deep - L.z[i]) * lift + (L.y[i] / 2) * h)}px`;
+    }
+  }
+
+  // Shows one side of a tile: the side up, unless told otherwise.
+  paint(i, side = this.game.side) {
+    const g = this.game;
+    const face = g.sides[side][i];
+    const t = this.tiles[i];
+    t.use.setAttribute('href', `#${symbolId(face)}`);
+    t.el.classList.toggle('night', g.sideNames[side] === 'night');
+    t.el.classList.toggle('soul', face === LOST);
+    t.el.setAttribute('aria-label', FACES[face].name);
+  }
+
+  // Brings every tile's state up to date: here or gone, free or not, chosen.
+  refresh() {
+    const g = this.game;
+    for (let i = 0; i < g.layout.count; i++) {
+      const el = this.tiles[i].el;
+      const here = g.present[i] === 1;
+      const free = here && g.isFree(i);
+      el.classList.toggle('gone', !here);
+      if (!here) el.classList.remove('hint');
+      el.classList.toggle('selected', i === this.selected);
+      el.classList.toggle('unlocked', here && g.unlocked[i] === 1);
+      el.tabIndex = free ? 0 : -1;
+      el.setAttribute('aria-disabled', String(!free));
+    }
+  }
+
+  press(i) {
+    const g = this.game;
+    if (this.busy || !g.present[i]) return;
+    if (this.keying) {
+      this.setKeying(false);
+      if (!g.useKey(i)) this.say('That tile is free already: the key is still yours.');
+      return;
+    }
+    if (!g.isFree(i)) return this.restart(this.tiles[i].el, 'shake');
+    if (this.selected === i) return this.select(-1);
+    if (this.selected >= 0 && g.canMatch(this.selected, i)) {
+      const a = this.selected;
+      this.selected = -1;
+      g.match(a, i);
+      return;
+    }
+    this.select(i);
+  }
+
+  select(i) {
+    this.selected = i;
+    this.refresh();
+  }
+
+  setKeying(on) {
+    this.keying = on;
+    this.el.classList.toggle('keying', on);
+  }
+
+  matched({ turned }) {
+    if (turned) this.turnOver(0);
+    this.refresh();
+  }
+
+  undone(entry) {
+    this.selected = -1;
+    if (entry.type === 'match') {
+      this.paint(entry.a);
+      this.paint(entry.b);
+      if (entry.souls) this.turnOver(1);
+    } else this.shuffled();
+    this.refresh();
+  }
+
+  shuffled() {
+    this.selected = -1;
+    const g = this.game;
+    for (let i = 0; i < g.layout.count; i++) {
+      if (!g.present[i]) continue;
+      this.restart(this.tiles[i].el, 'jiggle');
+      setTimeout(() => this.paint(i), 140);
+    }
+    this.refresh();
+  }
+
+  // The tiles turn over, in a wave from left to right, showing the side
+  // they were on until they reach the middle of their turn.
+  turnOver(from) {
+    const g = this.game;
+    const L = g.layout;
+    this.busy++;
+    let last = 0;
+    for (let i = 0; i < L.count; i++) {
+      if (!g.present[i]) continue;
+      this.paint(i, from);
+      const delay = Math.round((L.x[i] / L.width) * 900 + L.z[i] * 60);
+      last = Math.max(last, delay);
+      const el = this.tiles[i].el;
+      el.style.animationDelay = `${delay}ms`;
+      this.restart(el, 'flip');
+      setTimeout(() => this.paint(i), delay + 200);
+    }
+    setTimeout(() => this.busy--, last + 420);
+  }
+
+  // Shows the faces the tiles will turn over to, while the moon is held.
+  peek(on) {
+    const g = this.game;
+    this.el.classList.toggle('peeking', on && g.turnAhead);
+    for (let i = 0; i < g.layout.count; i++) if (g.present[i]) this.paint(i, on && g.turnAhead ? 1 : g.side);
+  }
+
+  show(pair) {
+    for (const i of pair) this.restart(this.tiles[i].el, 'hint');
+  }
+
+  // Plays an animation on a tile from the start, and takes it off at the end.
+  restart(el, name) {
+    el.classList.remove(name);
+    void el.offsetWidth;
+    el.classList.add(name);
+    el.addEventListener(
+      'animationend',
+      () => {
+        el.classList.remove(name);
+        el.style.animationDelay = '';
+      },
+      { once: true },
+    );
+  }
+
+  // Moves the keyboard's focus to the nearest free tile in a direction.
+  move(key) {
+    const g = this.game;
+    const L = g.layout;
+    const free = g.freeTiles();
+    if (!free.length) return;
+    const at = document.activeElement && document.activeElement.closest && document.activeElement.closest('.tile');
+    if (!at) return this.tiles[free[0]].el.focus();
+    const i = Number(at.dataset.i);
+    const [dx, dy] = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[key];
+    let best = -1;
+    let bestScore = Infinity;
+    for (const j of free) {
+      const vx = L.x[j] - L.x[i];
+      const vy = L.y[j] - L.y[i];
+      const along = vx * dx + vy * dy;
+      if (j === i || along <= 0) continue;
+      const score = along + 2 * Math.abs(vx * dy - vy * dx);
+      if (score < bestScore) {
+        best = j;
+        bestScore = score;
+      }
+    }
+    if (best >= 0) this.tiles[best].el.focus();
+  }
+}
