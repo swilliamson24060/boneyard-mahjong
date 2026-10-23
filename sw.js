@@ -3,9 +3,11 @@
 // to it first, so a new version shows at once, with the cache as the
 // fallback when the network is gone or too slow; the font, which never
 // changes, comes from the cache first. A new list of files wants a new name
-// for the cache, so that old copies are cleared away.
+// for the cache, so that old copies are cleared away: only Boneyard's own,
+// since other games on the same site share the browser's cache store.
 
-const CACHE = 'boneyard-1';
+const PREFIX = 'boneyard-';
+const CACHE = `${PREFIX}1`;
 const SLOW = 3500; // ms to wait on the network before answering from the cache
 
 const FILES = [
@@ -46,7 +48,7 @@ self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches
       .keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith(PREFIX) && k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });

@@ -414,10 +414,13 @@ document.addEventListener('visibilitychange', () => {
 });
 
 // An address of #play/name/seed plays that board freely; otherwise the night
-// goes on where it was left, or begins.
+// goes on where it was left, or begins, as it does for a visitor who only
+// looked at the first board last time.
 const [mode, key, seed, turnAt] = location.hash.slice(1).split('/');
+const p = saved.playing;
+const goingOn = p && HOURS[p.hour] && (saved.reached > 0 || p.hour > 0 || p.moves.length > 0);
 if (mode === 'play') freePlay(key, Number(seed) || newSeed(), Number(turnAt) || 0);
-else if (saved.playing && HOURS[saved.playing.hour]) beginHour(saved.playing.hour, saved.playing);
+else if (goingOn) beginHour(p.hour, p);
 else {
   beginHour(0);
   menu(true);

@@ -93,6 +93,8 @@ The classic 144-tile turtle is there too, for wider screens.
 | Thu 29 | Polish | Smooth on phones; No Frights; colour-blind check; offline play; icons |
 | Fri 30 | Ship | Live on a static host; Saturday stays spare |
 
+**Fri 23 Oct:** shipped, eight days before Halloween: the game is live at https://swilliamson24060.github.io/boneyard-mahjong/.
+
 **Thu 22 Oct:** everything up to shipping is done, seven days ahead. The Long Night's thirteen boards play from dusk to dawn, kept as you go, with sound. Once loaded the game plays offline and installs as an app with its own icon. Hints come by planchette, and the faces read by shape alone, with no colour. Players who ask their device for less motion get none. The game has only been tried at phone sizes in a desktop browser, so how smoothly it runs on a real phone is still to be seen. Shipping is next.
 
 ## Risks
