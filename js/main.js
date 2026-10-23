@@ -786,8 +786,10 @@ document.addEventListener('keyup', (e) => {
   }
 });
 
-// Offline play: sw.js keeps every file the game needs.
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+// Offline play: sw.js keeps every file the game needs. Not when the game is
+// framed in another site's page, as it is on itch.io, where keeping it
+// offline is not the game's to do.
+if ('serviceWorker' in navigator && window.top === window) navigator.serviceWorker.register('sw.js').catch(() => {});
 
 new ResizeObserver(() => board && board.fit()).observe($('table'));
 setInterval(tick, 1000);

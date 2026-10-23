@@ -44,6 +44,17 @@ The leaderboard lives in [Firebase](https://firebase.google.com): players sign i
 
 The game lives at https://swilliamson24060.github.io/boneyard-mahjong/, served by GitHub Pages from the `main` branch of this repository, as it is: `.nojekyll` keeps GitHub from processing it. Pushing `main` puts a new version online within a minute or two, and players get it the next time they load the game with a network.
 
+## On itch.io
+
+`python3 tools/itch.py` bundles the game for itch.io as `dist/boneyard-mahjong.zip`: `index.html` at its root, every file the game loads (the list in `sw.js`, with `sw.js` itself) and nothing else. The zip is built, not kept in git, so build it again after a change. On itch.io:
+
+1. Create a new project, with Kind of project set to HTML.
+2. Under Uploads, upload the zip, and tick This file will be played in the browser.
+3. Under Embed options, a viewport of 960 by 640 suits it, though the game fits whatever size it is given; tick Mobile friendly, and Fullscreen button.
+4. Save, and view the page.
+
+There the game plays in a frame in itch.io's page, so it leaves out its service worker: playing offline is for the game at its own address. Its leaderboard is the same one, but its players are new there, as a browser keeps a game's saved night, and its place on the leaderboard, apart for each site.
+
 ## Offline, and on a phone's home screen
 
 Once loaded, the game plays offline: `sw.js`, a service worker, keeps every file it needs, and the font. While there is a network it still asks the server for each file, rather than trusting the browser's ten-minute copy, so a new version shows on the next load. A file added to the game must also be added to `FILES` in `sw.js`, with a new name for `CACHE`; the test page checks that nothing is missing. `manifest.webmanifest` lets a phone install it from the browser (Share, then Add to Home Screen, on an iPhone), with its own icon. `tools/icons.py` draws the icon in plain Python and writes `icons/`: `python3 tools/icons.py`.
@@ -58,6 +69,7 @@ Once loaded, the game plays offline: `sw.js`, a service worker, keeps every file
 
 - `index.html`, `css/game.css` and `js/main.js`: the page, the buttons and keys, the cards, the clock, the sky, and keeping the night between visits.
 - `sw.js`, `manifest.webmanifest` and `icons/`: offline play, and installing the game as an app.
+- `tools/itch.py`: the zip for itch.io.
 - `js/night.js`: the Long Night's thirteen hours: each one's board, rules, sky and the words before it.
 - `js/score.js`: the score for a board, worked out from what the game records.
 - `js/leaderboard.js`: the leaderboard's boards, the names it takes, and posting and reading scores; `js/firebase.js` speaks to Firebase, and `js/firebase-config.js` says which project. `firestore.rules` is what Firestore lets players do.

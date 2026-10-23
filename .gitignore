@@ -1,4 +1,7 @@
 .DS_Store
 
+# The itch.io zip, built by tools/itch.py.
+dist/
+
 # The preview server's settings point into a scratch folder of one session.
 .claude/launch.json
