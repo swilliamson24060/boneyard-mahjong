@@ -498,6 +498,12 @@ button.on {
   max-width: 380px;
 }
 
+/* A card with a grid of buttons, the night's or the leaderboard's, at its
+   full width, so that the grid has the same columns on both. */
+#card .inner:has(.hours:not([hidden])) {
+  width: 100%;
+}
+
 #card h2 {
   margin: 0 0 6px;
   font: 400 28px/1.1 Creepster, fantasy, serif;
@@ -572,6 +578,69 @@ button.on {
 #card .hours small {
   color: var(--muted);
   font-size: 11px;
+}
+
+/* A name for the leaderboard: 16px, so that a phone does not zoom in on it. */
+#card input {
+  display: block;
+  width: 100%;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  font: 16px/1.2 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--text);
+  text-align: center;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 10px;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+#card input[hidden] {
+  display: none;
+}
+
+#card input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* The leaderboard's places: the player's own in the accent colour. */
+#card .ranks {
+  margin: 0 auto 16px;
+  min-width: 240px;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+#card .ranks[hidden] {
+  display: none;
+}
+
+#card .ranks td {
+  height: 1.6em;
+  padding: 0 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+#card .ranks td:first-child {
+  color: var(--muted);
+  text-align: right;
+}
+
+#card .ranks td:last-child {
+  text-align: right;
+}
+
+#card .ranks td[colspan] {
+  color: var(--muted);
+  text-align: center;
+}
+
+#card .ranks tr.me td {
+  color: var(--accent);
+  font-weight: 700;
 }
 
 #card .options {

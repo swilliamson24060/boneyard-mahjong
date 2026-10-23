@@ -56,8 +56,10 @@
     <div class="inner" role="dialog" aria-modal="true" aria-labelledby="card-title">
       <h2 id="card-title"></h2>
       <p id="card-text"></p>
+      <input id="card-input" type="text" maxlength="16" autocomplete="nickname" autocapitalize="words" spellcheck="false" enterkeyhint="done" aria-label="Your name" hidden>
       <table class="score" id="card-score" hidden></table>
       <div class="hours" id="card-grid" hidden></div>
+      <table class="ranks" id="card-ranks" hidden></table>
       <div class="actions" id="card-actions"></div>
       <div class="options" id="card-options" hidden>
         <label><input type="checkbox" id="magnify"> 🔍 Hold a tile to see it up close</label>

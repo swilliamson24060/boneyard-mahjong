@@ -1,0 +1,75 @@
+rules_version = '2';
+
+// Boneyard Mah Jong's leaderboard, at boards/{board}/scores/{uid}: on each
+// board, one entry a player, holding their best. A board is an hour of the
+// Long Night (6pm, 7pm, ... midnight, 1am, ... 6am), or the whole night
+// (night), where a player's bests are added up.
+//
+// Anyone may read the boards. A player, signed in anonymously, may write only
+// their own entries, which can only get better, or take a new name, and may
+// take them down. A score must be one its board could give at the fastest a
+// hand could clear it, a pair a second: these numbers come from the game, and
+// test.html checks that they still agree with it.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Each hour's board: its tiles, its par in seconds, and the most it can
+    // score before the bonus for speed (10 a pair, 250 for clearing it, and
+    // 150 for turning over without a lost soul).
+    function hourBoards() {
+      return {
+        '6pm': [82, 410, 660],
+        '7pm': [86, 430, 680],
+        '8pm': [98, 490, 740],
+        '9pm': [104, 520, 770],
+        '10pm': [96, 480, 730],
+        '11pm': [106, 530, 780],
+        'midnight': [118, 708, 990],
+        '1am': [118, 708, 990],
+        '2am': [110, 660, 950],
+        '3am': [116, 696, 980],
+        '4am': [118, 708, 990],
+        '5am': [128, 768, 1040],
+        '6am': [108, 648, 940]
+      };
+    }
+
+    function validName(name) {
+      return name is string && name.matches("^[\\p{L}\\p{N}][\\p{L}\\p{N} .'_-]{0,15}$");
+    }
+
+    // An hour's entry: its score at most the board's most plus 2 points for
+    // every second under par.
+    function validHour(board, d) {
+      let b = hourBoards()[board];
+      let keys = ['name', 'score', 'seconds', 'at'];
+      return d.keys().hasAll(keys) && d.keys().hasOnly(keys)
+        && d.score is int && d.seconds is int
+        && d.seconds * 2 >= b[0]
+        && d.score >= 0
+        && (d.score <= b[2] || d.score <= b[2] + 2 * (b[1] - d.seconds));
+    }
+
+    // The night's entry: the bests of so many hours added up, at most the
+    // most every hour could give.
+    function validNight(d) {
+      let keys = ['name', 'score', 'hours', 'at'];
+      return d.keys().hasAll(keys) && d.keys().hasOnly(keys)
+        && d.score is int && d.hours is int
+        && d.hours >= 1 && d.hours <= 13
+        && d.score >= 0 && d.score <= 25364;
+    }
+
+    match /boards/{board}/scores/{uid} {
+      allow read: if true;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.at == request.time
+        && validName(request.resource.data.name)
+        && ((board == 'night' && validNight(request.resource.data))
+          || (board != 'night' && board in hourBoards() && validHour(board, request.resource.data)))
+        && (resource == null || request.resource.data.score >= resource.data.score);
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

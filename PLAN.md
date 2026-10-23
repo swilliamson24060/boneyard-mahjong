@@ -83,6 +83,7 @@ The classic 144-tile turtle is there too, for wider screens.
 - The clock shows real time, and hints and shuffles cost points rather than seconds, so nothing is charged twice.
 - The score shows in the top bar and rises in small "+10"s and "−100"s from where they happen; the win card gives it line by line.
 - The night's card keeps the best score for each hour, and a night score: those bests added up.
+- A leaderboard, in Firebase, lists the best at each hour and the best night scores. Players join under a name of their own the first time they clear a board, and their bests go up as they make them. Each player can write only their own entries, which only get better, and Firestore's rules refuse any score faster than a pair a second could make.
 - The score is worked out from what the game already records, so it holds through undo and reloads.
 - The numbers are a starting point, to be tuned by playing.
 - Later, perhaps: quick hands, a speed mode where pairs found quickly one after another are worth double, then triple.
@@ -114,7 +115,7 @@ The classic 144-tile turtle is there too, for wider screens.
 | Thu 29 | Polish | Smooth on phones; No Frights; colour-blind check; offline play; icons |
 | Fri 30 | Ship | Live on a static host; Saturday stays spare |
 
-**Fri 23 Oct:** shipped, eight days before Halloween: the game is live at https://swilliamson24060.github.io/boneyard-mahjong/. Then scoring, updates that reach players on their next load, a magnifier for small tiles and tired eyes, and a word on every button.
+**Fri 23 Oct:** shipped, eight days before Halloween: the game is live at https://swilliamson24060.github.io/boneyard-mahjong/. Then scoring, updates that reach players on their next load, a magnifier for small tiles and tired eyes, a word on every button, and a leaderboard, in Firebase.
 
 **Thu 22 Oct:** everything up to shipping is done, seven days ahead. The Long Night's thirteen boards play from dusk to dawn, kept as you go, with sound. Once loaded the game plays offline and installs as an app with its own icon. Hints come by planchette, and the faces read by shape alone, with no colour. Players who ask their device for less motion get none. The game has only been tried at phone sizes in a desktop browser, so how smoothly it runs on a real phone is still to be seen. Shipping is next.
 

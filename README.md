@@ -22,6 +22,21 @@ Then open http://localhost:8790 to play. `tools/serve.py` serves this folder wit
 - From midnight the tiles turn over partway through each board. Hold the moon button or Space to see the night side. A tile held up close shows its night side beside it, or with the magnifier off, turns over while you hold it. Pairs that match on both sides are the ones to take before midnight.
 - Pairs of jack-o'-lanterns leave treats, whose buttons say what they do: a candle is a free hint, a skeleton key unlocks one blocked tile (press Unlock, then the tile), and a black cat is a free shuffle. A treat you have none of says what it does when you tap it.
 - Any board can also be played freely by address: `#play/turtle` for the classic turtle, or `#play/raven/12345/40` for the raven, dealt from seed 12345, turning over after 40 matches. A new deal (N) deals it again.
+- The leaderboard, on the night's card, lists the best scores at each hour of the Long Night, and for the whole night: each player's bests added up. The first time you clear a board, its card offers to put you on it under a name of your choosing, and from then on your bests go up as you make them. Your name can be changed, or taken off with your scores, from the leaderboard's card. Free play doesn't count.
+
+## The leaderboard
+
+The leaderboard lives in [Firebase](https://firebase.google.com): players sign in anonymously, which gives each browser an id of its own and no account to make, and the scores are kept in Firestore, at `boards/{board}/scores/{player}`, one entry a player on each board, holding their best. The game speaks to both through their REST APIs (`js/firebase.js`), so it needs no Firebase library.
+
+[firestore.rules](firestore.rules) says what players may do: anyone may read the boards, and each player may write only their own entries, which can only get better. A score must also be one its board could give at the fastest a hand could clear it, a pair a second, so the rules hold each board's tiles and par; test.html checks them against the game's own, and they need publishing again if the boards change. That stops impossible scores, not every made-up one: anything that shouldn't be there can be deleted in the Firebase console, under Firestore Database, Data.
+
+`js/firebase-config.js` names the project, `boneyard-mahjong`; without one, the game shows no leaderboard. Setting one up again, in the [Firebase console](https://console.firebase.google.com), takes five steps. The console's menus move about, but within a project its address is `console.firebase.google.com/project/<project id>/...`, and the pages below can be reached by changing the end of it:
+
+1. Create a project. Google Analytics isn't needed, and the free plan is plenty.
+2. Authentication (`authentication/providers`): Get started, then under Sign-in method turn on Anonymous. Leave its automatic clean-up off: a player whose anonymous account had been deleted could no longer change their own entries.
+3. Firestore Database (`firestore`): Create database, keeping the id `(default)` and the Standard edition, in a location near your players, in production mode.
+4. In Firestore Database, under Rules: replace what's there with the whole of `firestore.rules`, and Publish.
+5. Project settings (`settings/general`), Your apps: add a Web app (no Firebase Hosting; npm or a script tag, it doesn't matter, as the game uses neither) and copy its `apiKey` and `projectId` into `js/firebase-config.js`. Neither is a secret: every web app sends them from the browser, and the rules decide what anyone can do.
 
 ## Online
 
@@ -43,6 +58,7 @@ Once loaded, the game plays offline: `sw.js`, a service worker, keeps every file
 - `sw.js`, `manifest.webmanifest` and `icons/`: offline play, and installing the game as an app.
 - `js/night.js`: the Long Night's thirteen hours: each one's board, rules, sky and the words before it.
 - `js/score.js`: the score for a board, worked out from what the game records.
+- `js/leaderboard.js`: the leaderboard's boards, the names it takes, and posting and reading scores; `js/firebase.js` speaks to Firebase, and `js/firebase-config.js` says which project. `firestore.rules` is what Firestore lets players do.
 - `js/ui/sound.js`: the sounds, made with Web Audio as they play: the tiles, the organ, the bells.
 - `js/ui/board.js`: the board on the page: the tiles stacked in their layers and sized to fit, selecting and matching, peeking, the tiles turning over, and the planchette that points out a hint. Players who have asked their device for less motion get no shaking or turning waves.
 - `js/ui/faces.js`: the faces, drawn in code as SVG symbols, one drawing for both sides.

@@ -6,6 +6,7 @@ import { Board } from './ui/board.js';
 import { Magnifier } from './ui/magnifier.js';
 import { Sound } from './ui/sound.js';
 import { POINTS, par, scoreOf } from './score.js';
+import { Leaderboard, BOARDS, NIGHT, boardOf, nameOf, nameProblem, tidy } from './leaderboard.js';
 
 const MIDNIGHT = HOURS.findIndex((h) => h.name === 'Midnight');
 
@@ -40,9 +41,10 @@ let woke = 0;
 let prompted = false;
 
 // What is kept between visits: the latest hour reached, the best time and
-// the best score for each hour, and the board in play as its seed and its
-// moves.
-let saved = { reached: 0, best: {}, scores: {}, playing: null };
+// the best score for each hour, with the time that score took, the board in
+// play as its seed and its moves, and the player's name on the leaderboard,
+// with what has been posted there.
+let saved = { reached: 0, best: {}, scores: {}, times: {}, playing: null, name: '', declined: false, posted: {} };
 try {
   saved = { ...saved, ...JSON.parse(localStorage.getItem('boneyard.night')) };
 } catch {}
@@ -64,6 +66,8 @@ try {
   const kept = localStorage.getItem('boneyard.magnifier');
   if (kept) magnifying = kept === 'on';
 } catch {}
+
+const leaderboard = new Leaderboard();
 
 // ------------------------------------------------------------- the boards
 
@@ -185,23 +189,31 @@ function won() {
   }
   const spec = HOURS[hour];
   const best = saved.scores[hour];
-  if (best === undefined || total > best) saved.scores[hour] = total;
+  const better = best === undefined || total > best;
+  if (better) {
+    saved.scores[hour] = total;
+    saved.times[hour] = Math.floor(time);
+  }
   if (!saved.best[hour] || time < saved.best[hour]) saved.best[hour] = time;
   saved.reached = Math.max(saved.reached, Math.min(hour + 1, HOURS.length - 1));
   saved.playing = null;
   store();
-  const note = best === undefined ? '' : total > best ? ' Your best yet.' : ` Your best is ${signed(best, '')}.`;
+  const note = best === undefined ? '' : better ? ' Your best yet.' : ` Your best is ${signed(best, '')}.`;
   if (hour === HOURS.length - 1) {
     showCard('Dawn', `The sun is up, and you have seen the Long Night through. ${nightScore()}`, [
       ['Begin again', () => beginHour(0)],
       ['The turtle', () => freePlay('turtle')],
+      ...toLeaderboard(boardOf(hour)),
     ], [], lines);
   } else {
     showCard(`${spec.name}: cleared`, `${timing}${note}`, [
       [`On to ${HOURS[hour + 1].name}`, () => beginHour(hour + 1)],
       ['Play it again', () => beginHour(hour)],
+      ...toLeaderboard(boardOf(hour)),
     ], [], lines);
   }
+  if (better && hour === HOURS.length - 1) postAndRank(NIGHT, Object.values(saved.scores).reduce((a, b) => a + b, 0));
+  else if (better) postAndRank(boardOf(hour), total);
 }
 
 // The night score: the best score at each hour, added up.
@@ -230,6 +242,7 @@ function menu(opening = false) {
   else if (!inPlay && saved.reached > 0) actions.push([`On to ${HOURS[saved.reached].name}`, () => beginHour(saved.reached)]);
   actions.push([saved.reached > 0 || inPlay ? 'Begin again at 6 pm' : 'Begin at 6 pm', () => beginHour(0)]);
   if (hour >= 0 || !game) actions.push(['The turtle', () => freePlay('turtle')]);
+  if (leaderboard.on) actions.push(['Leaderboard', () => showLeaderboard(hour >= 0 ? boardOf(hour) : NIGHT)]);
   const hours = HOURS.map((h, i) => ({
     label: h.name,
     sub: saved.scores[i] !== undefined ? `★ ${signed(saved.scores[i], '')}` : '',
@@ -240,6 +253,183 @@ function menu(opening = false) {
   showCard('The Long Night', `${intro} ${nightScore()}`.trim(), actions, hours);
   $('magnify').checked = magnifying;
   $('card-options').hidden = false;
+}
+
+// -------------------------------------------------------- the leaderboard
+
+// The win card's way to the leaderboard: straight there, or by joining it
+// first, for a player who has not yet said whether they would.
+function toLeaderboard(where) {
+  if (!leaderboard.on) return [];
+  if (!saved.name && !saved.declined) return [['Join the leaderboard', () => askName(() => showLeaderboard(where))]];
+  return [['Leaderboard', () => showLeaderboard(where)]];
+}
+
+// Puts the player's bests on the leaderboard, those not there yet: each
+// hour's, with the time it took, and the night's, the bests added up. What
+// cannot go now goes the next time. One posting at a time.
+let posting = Promise.resolve();
+function postScores() {
+  posting = posting.then(sendScores).catch(() => {});
+  return posting;
+}
+
+async function sendScores() {
+  if (!leaderboard.on || !saved.name) return;
+  const due = (where, score) => {
+    const was = saved.posted[where];
+    return score >= 0 && !(was && was.score === score && was.name === saved.name);
+  };
+  const entries = [];
+  for (const [h, score] of Object.entries(saved.scores)) {
+    const where = boardOf(Number(h));
+    if (due(where, score)) entries.push({ board: where, name: saved.name, score, seconds: Math.floor(saved.times[h] ?? saved.best[h]) });
+  }
+  const bests = Object.values(saved.scores);
+  const night = bests.reduce((a, b) => a + b, 0);
+  if (bests.length && due(NIGHT, night)) entries.push({ board: NIGHT, name: saved.name, score: night, hours: bests.length });
+  if (!entries.length) return;
+  for (const e of await leaderboard.post(entries)) saved.posted[e.board] = { score: e.score, name: e.name };
+  store();
+}
+
+// After a new best, up it goes, and the win card, while it is still up,
+// says where it stands.
+async function postAndRank(where, score) {
+  if (!leaderboard.on || !saved.name) return;
+  const title = $('card-title').textContent;
+  const still = () => !$('card').hidden && $('card-title').textContent === title;
+  await postScores();
+  if (!still() || !saved.posted[where] || saved.posted[where].score !== score) return;
+  try {
+    const place = ordinal(await leaderboard.rank(where, score));
+    if (!still()) return;
+    $('card-text').textContent += where === NIGHT ? ` Your night is ${place} on the leaderboard.` : ` That's ${place} on the leaderboard.`;
+  } catch {}
+}
+
+// The leaderboard's card: the best ten on a board, and the player's own
+// place if they are further down, with every board to choose from.
+let shown = null; // the board the card shows, while it is up
+async function showLeaderboard(where) {
+  hold();
+  const grid = BOARDS.map((b) => ({
+    label: nameOf(b),
+    sub: saved.posted[b] ? `★ ${saved.posted[b].score.toLocaleString()}` : '',
+    act: () => showLeaderboard(b),
+    on: b === where,
+  }));
+  const actions = [
+    ['Back', () => menu()],
+    [saved.name ? 'Your name' : 'Join the leaderboard', () => askName(() => showLeaderboard(where))],
+  ];
+  const about = where === NIGHT ? "The whole night: each player's best at every hour, added up." : `The best at ${nameOf(where)}.`;
+  showCard('Leaderboard', `${about} Fetching…`, actions, grid);
+  showRanks([], null); // its ten places, empty, so that nothing moves when they come
+  shown = where;
+  try {
+    const rows = await leaderboard.top(where);
+    const mine = saved.posted[where];
+    let below = null; // the player, when they are on the board but not in its first ten
+    if (mine && leaderboard.me && !rows.some((r) => r.id === leaderboard.me)) {
+      below = { name: mine.name, score: mine.score, place: await leaderboard.rank(where, mine.score) };
+    }
+    if (shown !== where) return;
+    $('card-text').textContent = rows.length ? about : `${about} No one is on it yet.`;
+    showRanks(rows, below);
+  } catch {
+    if (shown === where) $('card-text').textContent = `${about} The leaderboard can't be reached just now.`;
+  }
+}
+
+function showRanks(rows, below) {
+  const table = $('card-ranks');
+  table.replaceChildren();
+  const add = (place, name, score, me) => {
+    const tr = table.insertRow();
+    if (me) tr.className = 'me';
+    tr.insertCell().textContent = place;
+    tr.insertCell().textContent = name;
+    tr.insertCell().textContent = score.toLocaleString();
+  };
+  rows.forEach((r, k) => add(k + 1, r.name, r.score, r.id === leaderboard.me));
+  for (let k = rows.length; k < 10; k++) table.insertRow().insertCell().colSpan = 3;
+  if (below) {
+    const gap = table.insertRow().insertCell();
+    gap.colSpan = 3;
+    gap.textContent = '⋯';
+    add(below.place, below.name, below.score, true);
+  }
+  table.hidden = false;
+}
+
+// The card for joining the leaderboard, or for changing the name on it or
+// coming off it. `then` is where to go afterwards.
+function askName(then) {
+  hold();
+  const joined = Boolean(saved.name);
+  const input = $('card-input');
+  const save = async () => {
+    const name = tidy(input.value);
+    const problem = nameProblem(name);
+    if (problem) {
+      $('card-text').textContent = problem;
+      input.focus();
+      return;
+    }
+    saved.name = name;
+    saved.declined = false;
+    store();
+    $('card-text').textContent = 'Putting your best scores up…';
+    await postScores();
+    then();
+  };
+  const actions = [['Save', save]];
+  if (joined) actions.push(['Leave the leaderboard', () => leave(then)]);
+  actions.push([
+    joined ? 'Back' : 'Not now',
+    () => {
+      if (!joined) {
+        saved.declined = true;
+        store();
+      }
+      then();
+    },
+  ]);
+  showCard(joined ? 'Your name' : 'Join the leaderboard', 'The name everyone will see beside your best scores: 16 letters at most.', actions);
+  input.hidden = false;
+  input.value = saved.name;
+  input.onkeydown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      save();
+    }
+  };
+  input.focus();
+}
+
+// Takes the player's scores off every board, and forgets their name.
+async function leave(then) {
+  $('card-text').textContent = 'Taking your scores down…';
+  try {
+    await posting;
+    await leaderboard.leave();
+  } catch {
+    $('card-text').textContent = "The leaderboard can't be reached just now: try again later.";
+    return;
+  }
+  saved.name = '';
+  saved.declined = true;
+  saved.posted = {};
+  store();
+  toast('Your scores are off the leaderboard.');
+  then();
+}
+
+// 1st, 2nd, 3rd, 4th, ... 11th, 12th, 13th, ... 21st.
+function ordinal(n) {
+  const teen = n % 100 >= 11 && n % 100 <= 13;
+  return `${n.toLocaleString()}${(!teen && { 1: 'st', 2: 'nd', 3: 'rd' }[n % 10]) || 'th'}`;
 }
 
 // --------------------------------------------------------- what's showing
@@ -327,9 +517,13 @@ function toast(text) {
 
 // A card over the board: a title, a few words, buttons, and perhaps a grid
 // of smaller buttons with a line under each, or a score line by line, the
-// last line its total. Only the night's card shows the options under them.
+// last line its total. Only the night's card shows the options under them,
+// and only the leaderboard's its places, and the name card its box.
 function showCard(title, text, actions, grid = [], lines = []) {
+  shown = null;
   $('card-options').hidden = true;
+  $('card-input').hidden = true;
+  $('card-ranks').hidden = true;
   $('card-title').textContent = title;
   $('card-text').textContent = text;
   const table = $('card-score');
@@ -345,10 +539,11 @@ function showCard(title, text, actions, grid = [], lines = []) {
   const box = $('card-grid');
   box.replaceChildren();
   box.hidden = !grid.length;
-  for (const { label, sub, act, disabled } of grid) {
+  for (const { label, sub, act, disabled, on } of grid) {
     const b = document.createElement('button');
     b.type = 'button';
     b.disabled = disabled;
+    b.classList.toggle('on', Boolean(on));
     b.innerHTML = `${label}<small>${sub || '&nbsp;'}</small>`;
     b.onclick = act;
     box.append(b);
@@ -442,6 +637,7 @@ moon.onpointerup = moon.onpointercancel = () => board.peek(false);
 moon.oncontextmenu = (e) => e.preventDefault();
 
 document.addEventListener('keydown', (e) => {
+  if (e.target instanceof HTMLInputElement) return; // a name being typed
   if (e.key === ' ') {
     e.preventDefault();
     if (!e.repeat) board.peek(true);
@@ -469,6 +665,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 document.addEventListener('keyup', (e) => {
+  if (e.target instanceof HTMLInputElement) return;
   if (e.key === ' ') {
     e.preventDefault();
     board.peek(false);
@@ -497,3 +694,4 @@ else {
   beginHour(0);
   menu(true);
 }
+postScores(); // any bests that could not go up last time
