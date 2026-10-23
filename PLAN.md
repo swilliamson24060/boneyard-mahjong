@@ -45,9 +45,10 @@ Undo never takes a treat back, and matching the same pair again after an undo do
 
 - **Two faces.** Every tile has a day face and a night face, both from the same 42, so there's no second set of tiles to learn. The night side is drawn glowing on dark tiles.
 - **The clock.** It moves on with each match and shows how many matches are left until midnight. When it strikes twelve, every tile turns over, and from then on pairs go by their night faces.
-- **Peeking.** Hold the moon button (or Space) to see the whole board's night side, or press and hold one tile. Nothing is hidden, so midnight is something to plan for rather than a trap. If four identical tiles are free, a peek helps you choose which two to take now.
+- **Peeking.** Hold the moon button (or Space) to see the whole board's night side, or press and hold one tile. Nothing is hidden, so midnight is something to plan for rather than a trap: pairs that match on both sides are the ones to take before midnight. If four identical tiles are free, a peek shows which two.
 - **Lost souls.** What you clear before midnight can leave a night face with no partner. That tile wakes as a lost soul, and lost souls pair with each other, so no tile is ever left with nothing to match.
-- **Fair deals.** The deal generator deals both sides at once. It plays a game in reverse, giving matching day faces to the pairs taken before midnight and matching night faces to the pairs taken after. So every deal has a way through the stroke of twelve, and each side on its own is a full, normal set. The black cat and the ordinary shuffle deal both sides again the same way.
+- **Fair deals.** The deal generator deals both sides at once. It plays a game in reverse: the pairs it takes before midnight match on both sides, and the pairs it takes after match by night, their day faces paired at random. So every deal has a way through the stroke of twelve with no lost souls, and each side on its own is a full, normal set. The black cat and the ordinary shuffle deal both sides again the same way.
+- **In trials** on the turtle, turning at the halfway mark: a player who takes pairs matching on both sides whenever there is one meets no lost souls on 143 boards in 150, and wins the night on 149. One who never peeks meets about 15, and can still win the night about as often as an ordinary board after the same number of careless moves.
 
 ### The Long Night
 
@@ -92,7 +93,7 @@ The classic 144-tile turtle is there too, for wider screens.
 | Thu 29 | Polish | Smooth on phones; No Frights; colour-blind check; offline play; icons |
 | Fri 30 | Ship | Live on a static host; Saturday stays spare |
 
-**Thu 22 Oct:** the engine is done a day early, with its tests passing. Midnight is next.
+**Thu 22 Oct:** the engine and Midnight are done, with their tests passing, three days ahead. The board and tiles are next.
 
 ## Risks
 

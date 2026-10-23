@@ -67,10 +67,18 @@ FLOWERS.forEach(([key, name], n) => face(flower, key, name, 'flower', String(n +
 const moon = kind('moon', 'Moon');
 MOONS.forEach(([key, name], n) => face(moon, key, name, 'moon', String(n + 1)));
 
+// The kinds a set is made of. One more face is never dealt: a tile left
+// without a partner when the tiles turn over at midnight wakes as a lost
+// soul, and lost souls match each other.
+export const SET = KINDS.slice();
+const lost = kind('lost', 'Lost soul');
+face(lost, 'lost-soul', 'Lost soul', 'soul', '');
+
 export const FACE = Object.fromEntries(FACES.map((f) => [f.key, f.id]));
 export const MATCH = Int8Array.from(FACES, (f) => f.kind);
 export const GHOST = FACE.ghost;
 export const LANTERN = FACE.lantern;
+export const LOST = FACE['lost-soul'];
 
 // The pairs a deal is made from: n of the 72 pairs in a full set. A board of
 // fewer than 144 tiles takes one pair of every kind before any kind twice, so
@@ -79,7 +87,7 @@ export function dealPairs(r, n) {
   if (n > 72) throw new Error(`A set has 72 pairs, not ${n}`);
   const first = [];
   const second = [];
-  for (const k of KINDS) {
+  for (const k of SET) {
     if (k.faces.length === 1) {
       const f = k.faces[0];
       first.push([f, f]);

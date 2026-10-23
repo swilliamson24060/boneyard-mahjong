@@ -22,6 +22,7 @@ Open http://localhost:8790/test.html. The engine tests run in the page, and the 
 - `js/engine/layout.js`: reading a layout drawn as text, and the free-tile rule. `layouts.js` holds the layouts themselves.
 - `js/engine/deal.js`: dealing so that every board can be won, and the safe shuffle.
 - `js/engine/solver.js`: finds a winning line, for hints and for checking twists.
-- `js/engine/game.js`: one board in play: matching, undo, hints, shuffles, Ghosts float and Treats.
+- `js/engine/game.js`: one board in play: matching, undo, hints, shuffles, Ghosts float, Treats and the stroke of midnight, when the tiles turn over.
+- `js/engine/midnight.js`: which tiles wake as lost souls when the tiles turn over.
 - `js/engine/rng.js`: seeded randomness, so a deal can be made again from its seed.
 - `tests/`: the engine tests, the small runner behind `test.html`, and the plain board drawing.

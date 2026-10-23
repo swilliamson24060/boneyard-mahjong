@@ -12,12 +12,14 @@ const INK = {
   dragon: '#c25e00',
   flower: '#8a2f6e',
   moon: '#4f4f4f',
+  soul: '#3f7f99',
 };
 const MOON = ['○', '◐', '●', '◑'];
 
 function label(f) {
   if (f.group === 'eyes' || f.group === 'bones' || f.group === 'graves') return f.group[0].toUpperCase() + f.index;
   if (f.group === 'moon') return MOON[f.index - 1];
+  if (f.group === 'soul') return '✧';
   return f.key[0].toUpperCase() + f.key[1];
 }
 
