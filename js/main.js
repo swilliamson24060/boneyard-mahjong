@@ -3,6 +3,7 @@ import * as layouts from './engine/layouts.js';
 import { HOURS, gameOptions } from './night.js';
 import { sprite } from './ui/faces.js';
 import { Board } from './ui/board.js';
+import { Magnifier } from './ui/magnifier.js';
 import { Sound } from './ui/sound.js';
 import { POINTS, par, scoreOf } from './score.js';
 
@@ -48,6 +49,15 @@ function store() {
 
 document.body.prepend(sprite());
 
+// Holding a tile shows it up close: from the start on a phone, whose tiles
+// are small, and on anything by the switch on the night's card.
+const magnifier = new Magnifier();
+let magnifying = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
+try {
+  const kept = localStorage.getItem('boneyard.magnifier');
+  if (kept) magnifying = kept === 'on';
+} catch {}
+
 // ------------------------------------------------------------- the boards
 
 // Sets up a board: deals it from its seed, plays back any moves already
@@ -58,7 +68,7 @@ function play({ layout, options, seed, replay = [], playedFor = 0, at = -1 }) {
   game = new Game(layout, { seed, ...options });
   for (const move of replay) redo(move);
   moves = replay.slice();
-  board = new Board($('board'), game, { say: toast, sound });
+  board = new Board($('board'), game, { say: toast, sound, magnifier: magnifying ? magnifier : null });
   game.on('match', ({ a, b }) => {
     sound.match();
     board.float(`+${POINTS.pair}`, b);
@@ -221,6 +231,8 @@ function menu(opening = false) {
   }));
   const intro = 'Thirteen boards, one an hour from dusk to dawn. Each hour you reach can be played again.';
   showCard('The Long Night', `${intro} ${nightScore()}`.trim(), actions, hours);
+  $('magnify').checked = magnifying;
+  $('card-options').hidden = false;
 }
 
 // --------------------------------------------------------- what's showing
@@ -308,8 +320,9 @@ function toast(text) {
 
 // A card over the board: a title, a few words, buttons, and perhaps a grid
 // of smaller buttons with a line under each, or a score line by line, the
-// last line its total.
+// last line its total. Only the night's card shows the options under them.
 function showCard(title, text, actions, grid = [], lines = []) {
+  $('card-options').hidden = true;
   $('card-title').textContent = title;
   $('card-text').textContent = text;
   const table = $('card-score');
@@ -391,6 +404,14 @@ function showSound() {
 }
 showSound();
 $('new').onclick = () => freePlay(location.hash.split('/')[1]);
+
+$('magnify').onchange = (e) => {
+  magnifying = e.target.checked;
+  try {
+    localStorage.setItem('boneyard.magnifier', magnifying ? 'on' : 'off');
+  } catch {}
+  if (board) board.setMagnifier(magnifying ? magnifier : null);
+};
 for (const what of ['undo', 'hint', 'shuffle', 'candle', 'key', 'cat']) $(what).onclick = () => help(what);
 
 const moon = $('moon');

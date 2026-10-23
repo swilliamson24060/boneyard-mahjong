@@ -114,7 +114,7 @@ The classic 144-tile turtle is there too, for wider screens.
 | Thu 29 | Polish | Smooth on phones; No Frights; colour-blind check; offline play; icons |
 | Fri 30 | Ship | Live on a static host; Saturday stays spare |
 
-**Fri 23 Oct:** shipped, eight days before Halloween: the game is live at https://swilliamson24060.github.io/boneyard-mahjong/. Then scoring, and updates that reach players on their next load.
+**Fri 23 Oct:** shipped, eight days before Halloween: the game is live at https://swilliamson24060.github.io/boneyard-mahjong/. Then scoring, updates that reach players on their next load, and a magnifier for small tiles and tired eyes.
 
 **Thu 22 Oct:** everything up to shipping is done, seven days ahead. The Long Night's thirteen boards play from dusk to dawn, kept as you go, with sound. Once loaded the game plays offline and installs as an app with its own icon. Hints come by planchette, and the faces read by shape alone, with no colour. Players who ask their device for less motion get none. The game has only been tried at phone sizes in a desktop browser, so how smoothly it runs on a real phone is still to be seen. Shipping is next.
 
@@ -131,6 +131,7 @@ The classic 144-tile turtle is there too, for wider screens.
 ## Small touches
 
 - A hint is a planchette gliding across the board to rest on a pair.
+- Holding a tile shows it up close, above the finger that would otherwise hide it, with its night side beside it until the tiles turn over. It is on from the start on phones, whose tiles are small, and a switch on the night's card turns it on or off anywhere.
 - Each match plays the next notes of Bach's Toccata and Fugue in D minor on a pipe organ, and clearing a board plays the whole opening. The music is long out of copyright.
 
 ## Parked for later

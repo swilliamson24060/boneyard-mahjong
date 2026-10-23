@@ -286,6 +286,62 @@ button.on {
   cursor: crosshair;
 }
 
+/* With the magnifier, a finger held on a tile may slide on to others: the
+   page does not pan under it, though two fingers still zoom it. */
+#board.magnifying .tile {
+  touch-action: pinch-zoom;
+}
+
+/* A held tile up close, and after an arrow the side it will turn to. Its
+   tiles are drawn as the board's are, at the size the magnifier sets. */
+.magnifier {
+  --gap: 0px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 150000;
+  width: max-content;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px calc(var(--lift) + 14px) calc(var(--lift) + 14px);
+  background: rgba(20, 14, 32, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  transform-origin: 0 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.magnifier.on {
+  opacity: 1;
+}
+
+.magnifier.stacked {
+  flex-direction: column;
+}
+
+.magnifier .tile {
+  position: relative;
+  flex: none;
+}
+
+.magnifier .arrow {
+  color: var(--muted);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.magnifier .arrow::before {
+  content: '→';
+}
+
+.magnifier.stacked .arrow::before {
+  content: '↓';
+}
+
 .float {
   position: absolute;
   z-index: 100001;
@@ -462,6 +518,28 @@ button.on {
 #card .hours small {
   color: var(--muted);
   font-size: 11px;
+}
+
+#card .options {
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+#card .options label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+#card .options input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
 }
 
 #where {

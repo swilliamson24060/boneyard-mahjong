@@ -9,7 +9,7 @@
 // since other games on the same site share the browser's cache store.
 
 const PREFIX = 'boneyard-';
-const CACHE = `${PREFIX}2`;
+const CACHE = `${PREFIX}3`;
 const SLOW = 3500; // ms to wait on the network before answering from the cache
 
 const FILES = [
@@ -27,6 +27,7 @@ const FILES = [
   'js/score.js',
   'js/ui/board.js',
   'js/ui/faces.js',
+  'js/ui/magnifier.js',
   'js/ui/sound.js',
   'js/engine/deal.js',
   'js/engine/game.js',

@@ -16,9 +16,10 @@ Then open http://localhost:8790 to play. `tools/serve.py` serves this folder wit
 
 - The Long Night is thirteen boards, one an hour from 6 pm to 6 am. Each hour says what is new before it starts, and every hour reached can be played again from the night's card (☾). The board in play is kept as you go, so closing the page loses nothing.
 - Take two free tiles that match. A tile is free when nothing lies on it and its left or right side is open.
+- Hold a tile to see it up close, above your finger, and slide to look at the tiles around it. On a phone this is on from the start; the switch on the night's card (☾) turns it on or off on any screen.
 - Undo (U), Hint (H), Shuffle (S), sound on and off (M). Arrow keys move between free tiles, and Enter takes one.
 - Each pair is worth 10 points and a cleared board 250, with 2 more for every second under par. A shuffle costs 100 and a hint 25; treats and undo are free. Turning over at midnight without a lost soul earns 150, and each lost soul costs 10. `js/score.js` holds the numbers, and PLAN.md the reasons.
-- From midnight the tiles turn over partway through each board. Hold the moon button or Space to see the night side, or press and hold one tile to see its own. Pairs that match on both sides are the ones to take before midnight.
+- From midnight the tiles turn over partway through each board. Hold the moon button or Space to see the night side. A tile held up close shows its night side beside it, or with the magnifier off, turns over while you hold it. Pairs that match on both sides are the ones to take before midnight.
 - Pairs of jack-o'-lanterns leave treats: a candle shows a match, a skeleton key frees one blocked tile (press the key, then the tile), and a black cat shuffles for free.
 - Any board can also be played freely by address: `#play/turtle` for the classic turtle, or `#play/raven/12345/40` for the raven, dealt from seed 12345, turning over after 40 matches. A new deal (N) deals it again.
 
@@ -45,6 +46,7 @@ Once loaded, the game plays offline: `sw.js`, a service worker, keeps every file
 - `js/ui/sound.js`: the sounds, made with Web Audio as they play: the tiles, the organ, the bells.
 - `js/ui/board.js`: the board on the page: the tiles stacked in their layers and sized to fit, selecting and matching, peeking, the tiles turning over, and the planchette that points out a hint. Players who have asked their device for less motion get no shaking or turning waves.
 - `js/ui/faces.js`: the faces, drawn in code as SVG symbols, one drawing for both sides.
+- `js/ui/magnifier.js`: a held tile up close, above the finger that would hide it, with the side it will turn to.
 - `js/engine/tiles.js`: the 42 faces, which of them match, and the pairs a deal is made from.
 - `js/engine/layout.js`: reading a layout drawn as text, and the free-tile rule. `layouts.js` holds the layouts themselves.
 - `js/engine/deal.js`: dealing so that every board can be won, and the safe shuffle.

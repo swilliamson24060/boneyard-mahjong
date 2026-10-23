@@ -3,7 +3,7 @@ import { symbolId } from './faces.js';
 
 const SVG = 'http://www.w3.org/2000/svg';
 const LIFT = 0.11; // how far each layer sits up and to the right, in tile widths
-const HOLD = 400; // how long a press must last to peek at one tile, in ms
+const HOLD = 400; // how long a press must last to hold a tile, in ms
 const WINDOW = 42 / 110; // how far down the planchette its window sits
 
 // Players who have asked their device for less motion get no shaking or
@@ -31,9 +31,10 @@ function planchette() {
 // sits up and to the right of the one under it, with the tiles' sides
 // showing below and to the left. It draws what the game says, and turns
 // clicks, taps and keys into moves. say(text) reports things for the page
-// to show, and sound, if given, plays a tock for each tile pressed.
+// to show, sound, if given, plays a tock for each tile pressed, and
+// magnifier, if given, shows a tile held down up close.
 export class Board {
-  constructor(el, game, { say = () => {}, sound = null } = {}) {
+  constructor(el, game, { say = () => {}, sound = null, magnifier = null } = {}) {
     this.el = el;
     this.game = game;
     this.say = say;
@@ -41,10 +42,13 @@ export class Board {
     this.selected = -1;
     this.keying = false; // the next tile pressed gets the skeleton key
     this.busy = 0; // while the tiles turn over, presses wait
-    this.held = -1; // the tile being peeked at with a long press
+    this.held = -1; // the tile held down: shown up close, or peeked at
+    this.at = [0, 0]; // where the pointer is on the screen
     this.swallowUntil = 0; // the click that ends a long press is not a press
     this.tiles = [];
+    this.tileWidth = 0;
     this.build();
+    this.setMagnifier(magnifier);
     game.on('match', (m) => this.matched(m));
     game.on('undo', (entry) => this.undone(entry));
     game.on('shuffle', () => this.shuffled());
@@ -84,20 +88,27 @@ export class Board {
     el.oncontextmenu = (e) => e.preventDefault();
     el.onpointerdown = (e) => {
       const t = e.target.closest('.tile');
-      if (!t || !this.game.turnAhead) return;
-      const i = Number(t.dataset.i);
+      if (!t || (!this.magnifier && !this.game.turnAhead)) return;
+      this.at = [e.clientX, e.clientY];
       clearTimeout(this.holding);
-      this.holding = setTimeout(() => {
-        this.held = i;
-        this.paint(i, 1);
-      }, HOLD);
+      this.holding = setTimeout(() => this.hold(Number(t.dataset.i)), HOLD);
+    };
+    el.onpointermove = (e) => {
+      this.at = [e.clientX, e.clientY];
+      if (this.held >= 0 && this.magnifier) this.hold(this.held);
     };
     el.onpointerup = el.onpointercancel = el.onpointerleave = () => {
       clearTimeout(this.holding);
       if (this.held < 0) return;
-      this.paint(this.held);
+      if (this.magnifier) this.magnifier.hide();
+      else this.paint(this.held);
       this.held = -1;
-      this.swallowUntil = performance.now() + 500;
+      this.swallowUntil = performance.now() + 250;
+    };
+    // A finger held on the board to magnify a tile may slide on to others,
+    // and the page does not pan under it; two fingers still zoom the page.
+    el.ontouchmove = (e) => {
+      if (this.magnifier && e.touches.length === 1 && e.cancelable) e.preventDefault();
     };
     el.onkeydown = (e) => {
       if (!e.key.startsWith('Arrow')) return;
@@ -123,6 +134,7 @@ export class Board {
     const w = Math.max(16, Math.floor(Math.min((box.width - 2 * pad) / across, (box.height - 2 * pad) / down, 84)));
     const h = Math.round((w * 4) / 3);
     const lift = Math.max(2, Math.round(w * LIFT));
+    this.tileWidth = w;
     const s = this.el.style;
     s.setProperty('--tile-w', `${w}px`);
     s.setProperty('--tile-h', `${h}px`);
@@ -146,6 +158,34 @@ export class Board {
     t.el.classList.toggle('night', g.sideNames[side] === 'night');
     t.el.classList.toggle('soul', face === LOST);
     t.el.setAttribute('aria-label', FACES[face].name);
+  }
+
+  // Whether holding a tile shows it up close, in the magnifier given, or
+  // (with none) turns it over to peek at the side it will turn to.
+  setMagnifier(magnifier) {
+    this.magnifier = magnifier;
+    this.el.classList.toggle('magnifying', Boolean(magnifier));
+  }
+
+  // A tile held down. The magnifier shows whichever tile is under the
+  // pointer, and follows it as it slides from tile to tile.
+  hold(i) {
+    if (!this.magnifier) {
+      this.held = i;
+      this.paint(i, 1);
+      return;
+    }
+    const [x, y] = this.at;
+    const under = document.elementFromPoint(x, y)?.closest('.tile');
+    this.held = under && this.el.contains(under) ? Number(under.dataset.i) : i;
+    this.magnifier.show(this.sidesOf(this.held), this.tileWidth, x, y);
+  }
+
+  // A tile's faces as the magnifier shows them, each [face, night]: the side
+  // up and, before the tiles turn over, the side they will turn to.
+  sidesOf(i) {
+    const g = this.game;
+    return (g.turnAhead ? [0, 1] : [g.side]).map((s) => [g.sides[s][i], g.sideNames[s] === 'night']);
   }
 
   // Brings every tile's state up to date: here or gone, free or not, chosen.

@@ -2,6 +2,7 @@ import { run } from './run.js';
 import './engine.test.js';
 import './site.test.js';
 import './score.test.js';
+import './magnifier.test.js';
 import { drawBoard } from './preview.js';
 import { Game } from '../js/engine/game.js';
 import { TURTLE } from '../js/engine/layouts.js';
