@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Cover</title>
+<!-- The cover for the game's itch.io page, 630 by 500, for tools/shots.py
+     to take a picture of: the title in the game's lettering, under a waning
+     moon, over a hand of the game's own tiles. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Creepster&display=swap">
+<link rel="stylesheet" href="../css/game.css">
+<style>
+  html, body { width: 630px; height: 500px; margin: 0; padding: 0; overflow: hidden; }
+  body {
+    display: block;
+    position: relative;
+    background:
+      radial-gradient(60% 45% at 50% 108%, rgba(255, 140, 40, 0.22), transparent 70%),
+      radial-gradient(125% 100% at 50% 0%, #6e2f52 0%, #321f4c 48%, #0e0a17 100%);
+  }
+  .moon {
+    position: absolute;
+    right: -34px;
+    top: -30px;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 42% 40%, #fffbe8, #f4e2ac 58%, #d6bd78);
+    box-shadow: 0 0 60px 18px rgba(255, 236, 170, 0.28);
+  }
+  .moon::after {
+    /* a shadow across it, for a waning moon */
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 18% 60%, rgba(46, 26, 64, 0.85) 34%, transparent 35%);
+  }
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff;
+  }
+  h1, h2 {
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin: 0;
+    text-align: center;
+    font-weight: 400;
+    font-family: Creepster, fantasy, serif;
+    line-height: 1;
+  }
+  h1 {
+    top: 40px;
+    font-size: 112px;
+    letter-spacing: 0.04em;
+    color: #ff9f1c;
+    text-shadow: 0 6px 0 #5b1e00, 0 0 34px rgba(255, 159, 28, 0.4);
+  }
+  h2 {
+    top: 160px;
+    font-size: 42px;
+    letter-spacing: 0.22em;
+    color: #f0e8f8;
+    text-shadow: 0 3px 0 #2b1640;
+  }
+  .fan {
+    --tile-w: 116px;
+    --tile-h: 155px;
+    --lift: 12px;
+    --gap: 0px;
+    position: absolute;
+    left: calc(50% - 58px);
+    top: 248px;
+  }
+  .fan .tile {
+    transform-origin: 50% 330%; /* a pivot well below, so that the hand fans out */
+    cursor: default;
+  }
+</style>
+</head>
+<body>
+  <div class="moon"></div>
+  <h1>Boneyard</h1>
+  <h2>Mah Jong</h2>
+  <div class="fan" id="fan"></div>
+  <script type="module">
+    import { sprite, symbolId } from '../js/ui/faces.js';
+    import { FACE } from '../js/engine/tiles.js';
+    document.body.prepend(sprite());
+
+    // A sky of stars, the same every time.
+    let seed = 7;
+    const next = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let k = 0; k < 34; k++) {
+      const star = document.createElement('i');
+      star.className = 'star';
+      const size = 1 + next() * 2.2;
+      Object.assign(star.style, { left: `${next() * 630}px`, top: `${next() * 300}px`, width: `${size}px`, height: `${size}px`, opacity: 0.35 + next() * 0.55 });
+      document.body.insertBefore(star, document.querySelector('.moon'));
+    }
+
+    // A hand of tiles: day faces in the middle, night faces glowing at the
+    // ends, and the jack-o'-lantern last, so that it lies on top.
+    const hand = [
+      ['bones-1', true, -26],
+      ['ghost', false, -13],
+      ['eyes-1', false, 13],
+      ['werewolf', true, 26],
+      ['lantern', false, 0],
+    ];
+    const fan = document.getElementById('fan');
+    for (const [key, night, angle] of hand) {
+      const tile = document.createElement('div');
+      tile.className = `tile${night ? ' night' : ''}`;
+      tile.style.transform = `rotate(${angle}deg)${angle ? '' : ' translateY(-14px)'}`;
+      tile.innerHTML = `<svg viewBox="0 0 60 80"><use href="#${symbolId(FACE[key])}"/></svg>`;
+      fan.append(tile);
+    }
+    await document.fonts.ready;
+    document.title = 'ready'; // for anyone watching it in a browser
+  </script>
+</body>
+</html>

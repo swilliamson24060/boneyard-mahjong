@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stage</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0e0a17; }
+  iframe { display: block; border: 0; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<script type="module">
+// Sets up a scene of the game for tools/shots.py to take a picture of: a
+// night saved part of the way through a board, its moves taken from the
+// game's own winning line, then the game itself in a frame filling the
+// window, and whatever the scene does there.
+import { Game } from '../js/engine/game.js';
+import { HOURS, gameOptions } from '../js/night.js';
+import { TURTLE } from '../js/engine/layouts.js';
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function line(game, n) {
+  const moves = [];
+  while (moves.length < n && game.left) {
+    const pair = game.hint();
+    if (!pair) break;
+    game.match(...pair);
+    moves.push(['m', ...pair]);
+  }
+  return moves;
+}
+
+// A night with every hour before `hour` cleared, and that hour under way.
+function night(hour, seed, matches, elapsed) {
+  const game = new Game(HOURS[hour].layout, { seed, ...gameOptions(hour) });
+  const moves = line(game, matches);
+  const scores = {};
+  const best = {};
+  for (let h = 0; h < hour; h++) {
+    scores[h] = 860 + ((h * 137) % 300);
+    best[h] = 280 + h * 23;
+  }
+  const saved = { reached: hour, best, scores, times: { ...best }, playing: { hour, seed, moves, elapsed }, free: null, name: '', declined: false, posted: {} };
+  return { saved, game };
+}
+
+const scenes = {
+  // 5 am, the crypt, after the bell: a long night of glowing tiles.
+  crypt: () => night(11, 1031, 18, 412),
+  // 10 pm, the bat, with the planchette pointing out a pair.
+  bat: () => ({
+    ...night(4, 2026, 12, 186),
+    async act(doc) {
+      doc.getElementById('hint').click();
+      await wait(1150);
+      // Headless Chrome takes its picture when its time is up, after the
+      // planchette would have faded: it stays, resting on the pair.
+      doc.querySelector('.planchette').style.opacity = '0.94';
+    },
+  }),
+  // The classic turtle, in free play.
+  turtle: () => {
+    const game = new Game(TURTLE, { seed: 777 });
+    const moves = line(game, 9);
+    return { saved: { reached: 0, best: {}, scores: {}, playing: null, free: { key: 'turtle', seed: 777, turnAt: 0, moves, elapsed: 96 } }, hash: '#play/turtle/777' };
+  },
+  // 1 am, the cauldron, a tile held up close: its day face and its night face.
+  magnifier: () => ({
+    ...night(7, 1300, 10, 140),
+    magnify: true,
+    async act(doc, win) {
+      const board = doc.getElementById('board').getBoundingClientRect();
+      const away = ([, r]) => Math.hypot(r.x - board.x - board.width / 2, r.bottom - board.bottom);
+      const free = [...doc.querySelectorAll('#board .tile[aria-disabled="false"]')].map((t) => [t, t.getBoundingClientRect()]);
+      const [tile, r] = free.sort((a, b) => away(a) - away(b))[0]; // low on the board, near the middle
+      tile.dispatchEvent(new win.PointerEvent('pointerdown', { bubbles: true, clientX: r.x + r.width / 2, clientY: r.y + r.height / 2, pointerType: 'touch', pointerId: 1, isPrimary: true }));
+      await wait(700);
+    },
+  }),
+  // 6 pm, the pumpkin, cleared: the score line by line.
+  cleared: () => {
+    const scene = night(0, 4242, 40, 262);
+    const last = scene.game.hint();
+    return {
+      ...scene,
+      async act(doc) {
+        for (const i of last) doc.querySelector(`#board .tile[data-i="${i}"]`).click();
+        await wait(900);
+        doc.activeElement.blur(); // no keyboard ring on the card's first button
+      },
+    };
+  },
+};
+
+// #scene, or #scene/390x844 for a frame of that size in the middle: a window
+// narrower than Chrome allows is made up by framing the game smaller, and
+// cutting the middle out of the picture.
+const [name, size] = location.hash.slice(1).split('/');
+const scene = scenes[name]();
+localStorage.clear();
+localStorage.setItem('boneyard.night', JSON.stringify(scene.saved));
+localStorage.setItem('boneyard.magnifier', scene.magnify ? 'on' : 'off');
+localStorage.setItem('boneyard.sound', 'on');
+const frame = document.createElement('iframe');
+if (size) {
+  const [w, h] = size.split('x');
+  Object.assign(frame.style, { width: `${w}px`, height: `${h}px`, margin: '0 auto' });
+}
+frame.src = `../index.html${scene.hash || ''}`;
+document.body.append(frame);
+await new Promise((r) => (frame.onload = r));
+// Headless Chrome's clock runs on ahead of transitions, so they go: every
+// change shows at once, and a hint glows as it does for a player who asks
+// for less motion.
+const still = frame.contentDocument.createElement('style');
+still.textContent = '*, *::before, *::after { transition: none !important; animation: none !important; } .tile.hint { filter: brightness(1.15) drop-shadow(0 0 6px #ffd54a); }';
+frame.contentDocument.head.append(still);
+await wait(4300); // past the note that says where the night goes on
+if (scene.act) await scene.act(frame.contentDocument, frame.contentWindow);
+document.title = 'ready'; // for anyone watching a scene in a browser
+</script>
+</body>
+</html>

@@ -53,6 +53,8 @@ The game lives at https://swilliamson24060.github.io/boneyard-mahjong/, served b
 3. Under Embed options, a viewport of 960 by 640 suits it, though the game fits whatever size it is given; tick Mobile friendly, and Fullscreen button.
 4. Save, and view the page.
 
+`python3 tools/shots.py` makes the page's pictures in `dist/itch/`, from the game as it is, in a few seconds: the cover, 630 by 500 as itch.io asks, and five screenshots, three from a computer and two from a phone. `tools/cover.html` draws the cover from the game's own tiles and lettering, and `tools/stage.html` sets up each screenshot's scene with moves from the game's own winning line, so they come out the same each time, and anew after a change. It needs Google Chrome, which draws the pictures headless (or the `CHROME` variable saying where a Chrome is), and macOS's `sips`, to cut out the phone pictures.
+
 There the game plays in a frame in itch.io's page, so it leaves out its service worker: playing offline is for the game at its own address. Its leaderboard is the same one, but its players are new there, as a browser keeps a game's saved night, and its place on the leaderboard, apart for each site.
 
 ## Offline, and on a phone's home screen
@@ -69,7 +71,7 @@ Once loaded, the game plays offline: `sw.js`, a service worker, keeps every file
 
 - `index.html`, `css/game.css` and `js/main.js`: the page, the buttons and keys, the cards, the clock, the sky, and keeping the night between visits.
 - `sw.js`, `manifest.webmanifest` and `icons/`: offline play, and installing the game as an app.
-- `tools/itch.py`: the zip for itch.io.
+- `tools/itch.py`: the zip for itch.io, and `tools/shots.py`, with `tools/cover.html` and `tools/stage.html`, its cover and screenshots.
 - `js/night.js`: the Long Night's thirteen hours: each one's board, rules, sky and the words before it.
 - `js/score.js`: the score for a board, worked out from what the game records.
 - `js/leaderboard.js`: the leaderboard's boards, the names it takes, and posting and reading scores; `js/firebase.js` speaks to Firebase, and `js/firebase-config.js` says which project. `firestore.rules` is what Firestore lets players do.
