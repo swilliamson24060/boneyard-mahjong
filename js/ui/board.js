@@ -188,7 +188,8 @@ export class Board {
     return (g.turnAhead ? [0, 1] : [g.side]).map((s) => [g.sides[s][i], g.sideNames[s] === 'night']);
   }
 
-  // Brings every tile's state up to date: here or gone, free or not, chosen.
+  // Brings every tile's state up to date: here or gone, free or blocked,
+  // chosen.
   refresh() {
     const g = this.game;
     for (let i = 0; i < g.layout.count; i++) {
@@ -196,6 +197,7 @@ export class Board {
       const here = g.present[i] === 1;
       const free = here && g.isFree(i);
       el.classList.toggle('gone', !here);
+      el.classList.toggle('blocked', here && !free);
       if (!here) el.classList.remove('hint');
       el.classList.toggle('selected', i === this.selected);
       el.classList.toggle('unlocked', here && g.unlocked[i] === 1);

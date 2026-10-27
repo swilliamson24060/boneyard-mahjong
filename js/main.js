@@ -68,6 +68,14 @@ try {
   if (kept) magnifying = kept === 'on';
 } catch {}
 
+// Tiles that can't be taken yet are dimmed, so that only the free ones need
+// looking over: from the start, unless switched off on the night's card.
+let dimming = true;
+try {
+  dimming = localStorage.getItem('boneyard.dim') !== 'off';
+} catch {}
+$('board').classList.toggle('dimming', dimming);
+
 const leaderboard = new Leaderboard();
 
 // ------------------------------------------------------------- the boards
@@ -271,6 +279,7 @@ function menu(opening = false) {
   const intro = 'Thirteen boards, one an hour from dusk to dawn. Each hour you reach can be played again.';
   showCard('The Long Night', `${intro} ${nightScore()}`.trim(), actions, hours);
   $('magnify').checked = magnifying;
+  $('dim').checked = dimming;
   $('card-options').hidden = false;
 }
 
@@ -729,6 +738,14 @@ $('magnify').onchange = (e) => {
     localStorage.setItem('boneyard.magnifier', magnifying ? 'on' : 'off');
   } catch {}
   if (board) board.setMagnifier(magnifying ? magnifier : null);
+};
+
+$('dim').onchange = (e) => {
+  dimming = e.target.checked;
+  try {
+    localStorage.setItem('boneyard.dim', dimming ? 'on' : 'off');
+  } catch {}
+  $('board').classList.toggle('dimming', dimming);
 };
 for (const what of ['undo', 'hint', 'shuffle', 'candle', 'key', 'cat']) $(what).onclick = () => help(what);
 $('hint').title = `A hint, for ${-POINTS.hint} points (H)`;

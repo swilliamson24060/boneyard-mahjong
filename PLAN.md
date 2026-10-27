@@ -20,7 +20,8 @@ Classic Mah Jong solitaire. You clear a stacked layout by pairing matching tiles
 | Flowers | **The poison garden**: nightshade, foxglove, hemlock, wolfsbane; any two match |
 | Seasons | **The moons**: new, waxing, full, waning; any two match |
 
-- Every tile keeps a small corner index (3, E and so on), so Mah Jong players can read it at a glance.
+- Every tile keeps a corner index (3, E and so on), so Mah Jong players can read it at a glance: big and bold, as the tiles are small on a phone, or in itch.io's frame.
+- The tiles that can't be taken yet are dimmed, so that only the free ones need looking over. It hides nothing a careful look wouldn't show, and can be switched off.
 - Each suit has its own colour and shape.
 - The faces are SVG drawn in code: small, sharp at any size, and easy to recolour.
 - The tone is spooky-fun rather than gory, with no jump scares, so it suits all ages.
@@ -115,7 +116,7 @@ The classic 144-tile turtle is there too, for wider screens.
 | Thu 29 | Polish | Smooth on phones; No Frights; colour-blind check; offline play; icons |
 | Fri 30 | Ship | Live on a static host; Saturday stays spare |
 
-**Fri 23 Oct:** shipped, eight days before Halloween: the game is live at https://swilliamson24060.github.io/boneyard-mahjong/. Then scoring, updates that reach players on their next load, a magnifier for small tiles and tired eyes, a word on every button, a leaderboard, in Firebase, the menu's plain ways between the Long Night and the turtle, or to give a board up, a pause that hides the board, and a zip, a cover and screenshots for itch.io.
+**Fri 23 Oct:** shipped, eight days before Halloween: the game is live at https://swilliamson24060.github.io/boneyard-mahjong/. Then scoring, updates that reach players on their next load, a magnifier for small tiles and tired eyes, a word on every button, a leaderboard, in Firebase, the menu's plain ways between the Long Night and the turtle, or to give a board up, a pause that hides the board, a zip, a cover and screenshots for itch.io, and then, for tiles hard to read in itch.io's frame, the blocked tiles dimmed and the corner numbers made big.
 
 **Thu 22 Oct:** everything up to shipping is done, seven days ahead. The Long Night's thirteen boards play from dusk to dawn, kept as you go, with sound. Once loaded the game plays offline and installs as an app with its own icon. Hints come by planchette, and the faces read by shape alone, with no colour. Players who ask their device for less motion get none. The game has only been tried at phone sizes in a desktop browser, so how smoothly it runs on a real phone is still to be seen. Shipping is next.
 

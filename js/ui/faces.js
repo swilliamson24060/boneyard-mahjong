@@ -11,8 +11,11 @@ const PAPER = 'var(--paper)';
 const DARK = '#231c2b'; // dark fills that stay dark by night, outlined in ink
 const LEAF = '#3a8f55';
 
-// The groups with a small index in a corner, in the group's colour, which the
-// tile sets as --index-eyes and so on: brighter by night.
+// The groups with an index in a corner, in the group's colour, which the tile
+// sets as --index-eyes and so on: brighter by night. It is big and bold
+// enough to name a tile at a glance on the smallest board, with no eyes or
+// bones to count, and ringed in the tile's own colour, --face-1, where it
+// meets the drawing.
 const INDEXED = new Set(['eyes', 'bones', 'graves', 'monster', 'flower', 'moon']);
 
 export const symbolId = (face) => `face-${FACES[face].key}`;
@@ -37,7 +40,8 @@ function draw(f) {
 
 function index(f) {
   if (!f.index || !INDEXED.has(f.group)) return '';
-  return `<text x="5" y="14" style="fill:var(--index-${f.group});font:800 12px system-ui,-apple-system,sans-serif">${f.index}</text>`;
+  const ring = 'stroke:var(--face-1);stroke-width:3;stroke-linejoin:round;paint-order:stroke';
+  return `<text x="3.5" y="17.5" style="fill:var(--index-${f.group});${ring};font:900 17px system-ui,-apple-system,sans-serif">${f.index}</text>`;
 }
 
 const style = (fill, stroke = 'none', width = 1.4, extra = '') =>
