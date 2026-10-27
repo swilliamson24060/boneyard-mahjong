@@ -20,7 +20,7 @@ Classic Mah Jong solitaire. You clear a stacked layout by pairing matching tiles
 | Flowers | **The poison garden**: nightshade, foxglove, hemlock, wolfsbane; any two match |
 | Seasons | **The moons**: new, waxing, full, waning; any two match |
 
-- Every tile keeps a corner index (3, E and so on), so Mah Jong players can read it at a glance: big and bold, as the tiles are small on a phone, or in itch.io's frame.
+- Every tile keeps a corner index (3, E and so on), so Mah Jong players can read it at a glance: big and bold, as on a playing card, with the drawing shrunk into the rest of the tile, as the tiles are small on a phone, or in itch.io's frame, and old eyes need it.
 - The tiles that can't be taken yet are dimmed, so that only the free ones need looking over. It hides nothing a careful look wouldn't show, and can be switched off.
 - Each suit has its own colour and shape.
 - The faces are SVG drawn in code: small, sharp at any size, and easy to recolour.

@@ -12,22 +12,31 @@ const DARK = '#231c2b'; // dark fills that stay dark by night, outlined in ink
 const LEAF = '#3a8f55';
 
 // The groups with an index in a corner, in the group's colour, which the tile
-// sets as --index-eyes and so on: brighter by night. It is big and bold
-// enough to name a tile at a glance on the smallest board, with no eyes or
-// bones to count, and ringed in the tile's own colour, --face-1, where it
-// meets the drawing.
+// sets as --index-eyes and so on: brighter by night. Like a playing card's,
+// it is what names the tile, big and bold enough to read at a glance on the
+// smallest board, with no eyes or bones to count: the drawing gives it the
+// top left corner, shrinking toward the bottom right, and the index is
+// ringed in the tile's own colour, --face-1, where the two meet.
 const INDEXED = new Set(['eyes', 'bones', 'graves', 'monster', 'flower', 'moon']);
+const SHRINK = 0.8; // the drawing on a tile with an index
 
 export const symbolId = (face) => `face-${FACES[face].key}`;
+const indexed = (f) => Boolean(f.index) && INDEXED.has(f.group);
 
 // The sprite, to be put in the page once.
 export function sprite() {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.setAttribute('aria-hidden', 'true');
   svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
-  const symbols = FACES.map((f) => `<symbol id="${symbolId(f.id)}" viewBox="0 0 60 80">${draw(f)}${index(f)}</symbol>`);
+  const symbols = FACES.map((f) => `<symbol id="${symbolId(f.id)}" viewBox="0 0 60 80">${art(f)}${index(f)}</symbol>`);
   svg.innerHTML = `<defs>${symbols.join('')}</defs>`;
   return svg;
+}
+
+// A face's drawing, shrunk toward the bottom right on a tile with an index.
+function art(f) {
+  if (!indexed(f)) return draw(f);
+  return `<g transform="translate(${60 * (1 - SHRINK)} ${80 * (1 - SHRINK)}) scale(${SHRINK})">${draw(f)}</g>`;
 }
 
 function draw(f) {
@@ -39,9 +48,9 @@ function draw(f) {
 }
 
 function index(f) {
-  if (!f.index || !INDEXED.has(f.group)) return '';
-  const ring = 'stroke:var(--face-1);stroke-width:3;stroke-linejoin:round;paint-order:stroke';
-  return `<text x="3.5" y="17.5" style="fill:var(--index-${f.group});${ring};font:900 17px system-ui,-apple-system,sans-serif">${f.index}</text>`;
+  if (!indexed(f)) return '';
+  const ring = 'stroke:var(--face-1);stroke-width:4;stroke-linejoin:round;paint-order:stroke';
+  return `<text x="2.5" y="25.5" style="fill:var(--index-${f.group});${ring};font:900 29px system-ui,-apple-system,sans-serif">${f.index}</text>`;
 }
 
 const style = (fill, stroke = 'none', width = 1.4, extra = '') =>

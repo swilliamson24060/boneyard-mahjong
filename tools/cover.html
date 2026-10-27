@@ -100,13 +100,15 @@
       document.body.insertBefore(star, document.querySelector('.moon'));
     }
 
-    // A hand of tiles: day faces in the middle, night faces glowing at the
-    // ends, and the jack-o'-lantern last, so that it lies on top.
+    // A hand of tiles: day faces in the middle, one with its big corner
+    // number, night faces glowing at the ends, and the jack-o'-lantern last,
+    // so that it lies on top. The night faces have no number, so that their
+    // drawings fill their tiles.
     const hand = [
-      ['bones-1', true, -26],
+      ['brew', true, -26],
       ['ghost', false, -13],
       ['eyes-1', false, 13],
-      ['werewolf', true, 26],
+      ['lost-soul', true, 26],
       ['lantern', false, 0],
     ];
     const fan = document.getElementById('fan');
